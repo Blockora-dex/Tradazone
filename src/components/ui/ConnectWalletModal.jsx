@@ -222,7 +222,8 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
                                                 completeWalletLogin(result.address, 'stellar');
                                                 if (onConnect) onConnect('stellar');
                                             } else if (result?.error) {
-                                                setError({ type: 'stellar', code: result.error.includes('detected') ? 'not_installed' : 'failed', message: result.error });
+                                                // Pass the error code (e.g. NOT_INSTALLED, LOCKED, ACCESS_DENIED)
+                                                setError({ type: 'stellar', code: result.error === 'NOT_INSTALLED' ? 'not_installed' : 'failed', message: result.error });
                                             }
                                         }}
                                         disabled={connecting !== null || freighter.isConnecting}
