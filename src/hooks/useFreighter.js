@@ -16,62 +16,52 @@ export function useFreighter() {
     setIsConnecting(true);
 
     try {
-      // Step 1: Wait for Freighter to inject into window (up to 3s)
+      // Step 1: Wait for Freighter extension to inject into the page.
+      // The v6 API uses window.freighter internally — we wait for that.
       const detected = await waitForFreighter(3000);
       if (!detected) {
         throw new Error("NOT_INSTALLED");
       }
 
-      // Step 2: Check if Freighter is unlocked.
-      // NOTE: newer versions of @stellar/freighter-api return an _object_:
-      //   { isConnected: true } or { isConnected: false }
-      // Older versions return a plain boolean.
-      // We handle both here.
+      // Step 2: isConnected() in v6 returns { isConnected: boolean }
+      // It checks window.freighter internally.
       const connectionResult = await isConnected();
-      const connected =
-        typeof connectionResult === "boolean"
-          ? connectionResult
-          : !!connectionResult?.isConnected;
-
-      if (!connected) {
+      if (!connectionResult?.isConnected) {
         throw new Error("LOCKED");
       }
 
-      // Step 3: Request wallet access — fires the Freighter popup
+      // Step 3: requestAccess() in v6 returns { address: string, error?: string }
+      // It fires the extension popup and asks the user to grant access.
       const accessResult = await requestAccess();
 
-      // Again, newer versions return { address, error } object,
-      // older versions return the address string directly.
-      let address = null;
-      if (typeof accessResult === "string") {
-        address = accessResult; // old API
-      } else if (accessResult?.address) {
-        address = accessResult.address; // new API
-      } else if (accessResult?.error) {
+      // If there's an error, or the address is empty/undefined, the user denied
+      if (accessResult?.error) {
         throw new Error("ACCESS_DENIED");
-      } else {
+      }
+      if (!accessResult?.address) {
         throw new Error("ACCESS_DENIED");
       }
 
-      // Step 4: Get the current network to verify config
+      const { address } = accessResult;
+
+      // Step 4: getNetwork() in v6 returns { network: string, networkPassphrase: string, error?: string }
       let currentNetwork = "UNKNOWN";
       try {
         const netResult = await getNetwork();
-        currentNetwork =
-          typeof netResult === "string"
-            ? netResult
-            : netResult?.network ?? "UNKNOWN";
+        if (netResult?.network) {
+          currentNetwork = netResult.network; // e.g. "PUBLIC", "TESTNET"
+        }
       } catch {
-        // getNetwork() is non-critical, don't fail if it throws
+        // Non-critical — don't fail if network detection fails
       }
 
       setPublicKey(address);
       setNetwork(currentNetwork);
-      console.log(`[Freighter] Connected to ${currentNetwork}:`, address);
+      console.log(`[Freighter] Connected (${currentNetwork}):`, address);
       return { success: true, address, network: currentNetwork };
 
     } catch (err) {
-      console.error("[Freighter] Connection failed:", err.message);
+      console.error("[Freighter] Error:", err.message);
       setError(err.message);
       return { success: false, error: err.message };
     } finally {
