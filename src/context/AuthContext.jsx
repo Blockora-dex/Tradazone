@@ -345,7 +345,7 @@ export function AuthProvider({ children }) {
             try {
                 const { disconnect } = await import('get-starknet');
                 await disconnect();
-            } catch (_) { /* swallow */ }
+            } catch { /* swallow */ }
         }
         // LOBSTR has no programmatic disconnect API
         logout();
@@ -371,6 +371,7 @@ export function AuthProvider({ children }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error('useAuth must be used within an AuthProvider');

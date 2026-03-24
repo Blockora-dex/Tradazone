@@ -8,7 +8,7 @@ import ConnectWalletModal from '../../components/ui/ConnectWalletModal';
 function SignUp() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { connectWallet, user, login } = useAuth();
+    const { connectWallet, user } = useAuth();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 

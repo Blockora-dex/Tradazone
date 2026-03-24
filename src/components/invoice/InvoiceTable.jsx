@@ -1,4 +1,4 @@
-function InvoiceTable({ items = [], currency = 'STRK' }) {
+function InvoiceTable({ items = [] }) {
     return (
         <div className="mb-8">
             {/* Table Header */}

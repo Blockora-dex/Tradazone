@@ -1,3 +1,4 @@
+/* global process */
 import fs from 'fs';
 import { execSync } from 'child_process';
 

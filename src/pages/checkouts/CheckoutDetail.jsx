@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Copy, Link as LinkIcon, Edit, Trash2, ExternalLink } from 'lucide-react';
 import Button from '../../components/forms/Button';
 import StatusBadge from '../../components/tables/StatusBadge';
@@ -6,7 +6,6 @@ import { useData } from '../../context/DataContext';
 
 function CheckoutDetail() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const { checkouts } = useData();
     const checkout = checkouts.find(c => c.id === id);
 

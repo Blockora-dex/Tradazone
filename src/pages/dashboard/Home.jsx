@@ -15,7 +15,7 @@ import { useData } from '../../context/DataContext';
 import WelcomeModal from '../../components/ui/WelcomeModal';
 
 function Home() {
-    const { user, wallet, connectWallet } = useAuth();
+    const { wallet } = useAuth();
     const { transactions, dashboardStats } = useData();
     const recentTransactions = transactions.slice(0, 5);
 

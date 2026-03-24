@@ -1,11 +1,10 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import Button from '../../components/forms/Button';
 import { useData } from '../../context/DataContext';
 
 function ItemDetail() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const { items } = useData();
     const item = items.find(i => i.id === id);
 

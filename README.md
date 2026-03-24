@@ -134,50 +134,7 @@ tradazone/
 
 Contributions, bug reports, and feature suggestions are all welcome!
 
-### How to Contribute
-
-1. **Fork** this repository
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. **Commit your changes** with a clear message
-   ```bash
-   git commit -m "feat: add your feature description"
-   ```
-4. **Push** to your branch
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-5. **Open a Pull Request** — describe what you changed and why
-
-### Commit Message Convention
-
-We follow a simple convention for commit messages:
-
-| Prefix | When to use |
-|---|---|
-| `feat:` | A new feature |
-| `fix:` | A bug fix |
-| `style:` | UI/CSS changes with no logic change |
-| `refactor:` | Code restructuring without behavior change |
-| `docs:` | Documentation updates |
-| `chore:` | Dependency updates, build configs |
-
-### Reporting Issues
-
-Found a bug or have a suggestion? [Open an issue](https://github.com/FolushoJoseph/Tradazone/issues) and include:
-- A clear description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots if applicable
-
-### Code Style
-
-- Keep components focused and single-purpose
-- Co-locate styles with components where possible
-- Follow existing naming conventions (`PascalCase` for components, `camelCase` for hooks/utils)
-- Avoid hardcoded values — use the data/context layer
+Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct, the process for submitting pull requests, and our CI/CD pipeline.
 
 ---
 

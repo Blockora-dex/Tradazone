@@ -10,14 +10,7 @@ const KEYS = {
     items: 'tradazone_items',
 };
 
-function load(key, fallback) {
-    try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-    } catch {
-        return fallback;
-    }
-}
+
 
 function save(key, data) {
     localStorage.setItem(key, JSON.stringify(data));
@@ -160,6 +153,7 @@ export function DataProvider({ children }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useData() {
     const ctx = useContext(DataContext);
     if (!ctx) throw new Error('useData must be used within a DataProvider');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Users, ShoppingCart, X } from 'lucide-react';
 import Logo from './Logo';
@@ -7,14 +7,10 @@ const ONBOARDED_KEY = 'tradazone_onboarded';
 
 function WelcomeModal() {
     const navigate = useNavigate();
-    const [visible, setVisible] = useState(false);
-
-    useEffect(() => {
+    const [visible, setVisible] = useState(() => {
         const onboarded = localStorage.getItem(ONBOARDED_KEY);
-        if (onboarded === null || onboarded === 'false') {
-            setVisible(true);
-        }
-    }, []);
+        return onboarded === null || onboarded === 'false';
+    });
 
     const dismiss = () => {
         localStorage.setItem(ONBOARDED_KEY, 'true');

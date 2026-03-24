@@ -122,19 +122,19 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
     const [error, setError] = useState(null);
     const [view, setView] = useState('primary'); // 'primary' | 'secondary'
 
-    const { completeWalletLogin, isConnecting: isAuthConnecting } = useAuth();
-    const lobstrHook = useLobstr();
-
-    const installed = useWalletDetection();
-
-    // Reset state when modal opens
-    useEffect(() => {
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (isOpen !== prevIsOpen) {
+        setPrevIsOpen(isOpen);
         if (isOpen) {
             setConnecting(null);
             setError(null);
             setView('primary');
         }
-    }, [isOpen]);
+    }
+
+    const { completeWalletLogin, isConnecting: _isAuthConnecting } = useAuth();
+    const lobstrHook = useLobstr();
+    const installed = useWalletDetection();
 
     if (!isOpen) return null;
 
