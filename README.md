@@ -47,11 +47,19 @@ cd Tradazone
 
 # 3. Install dependencies
 npm install
+```
+> ⚠️ **Security Notice:**
+> This project depends on third-party packages that are actively maintained.
+> Always ensure you install the latest secure versions by running:
+```bash
+npm audit fix
+```
+> Avoid installing outdated or manually pinned versions unless necessary.
 
+```bash
 # 4. Start the development server
 npm run dev
 ```
-
 The app will be available at `http://localhost:5173`.
 
 ### Building for Production
@@ -155,12 +163,12 @@ tradazone/
 | Framework | React 19 + Vite 7 |
 | Routing | React Router DOM v7 |
 | Styling | Tailwind CSS v3 |
-| Charts | Chart.js + react-chartjs-2 |
-| PDF Export | html2pdf.js |
+| Charts | Chart.js + react-chartjs-2 (ensure latest stable version) |
+| PDF Export | html2pdf.js(ensure latest stable version) |
 | Icons | Lucide React |
 | Stellar Wallet | @stellar/freighter-api |
 | Starknet Wallet | get-starknet + starknet.js |
-| EVM Wallet | ethers.js v6 |
+| EVM Wallet | ethers.js v6 (ensure latest stable version)|
 | Deployment | GitHub Pages (via gh-pages) |
 
 ---
@@ -234,6 +242,20 @@ Manual test checklist after edits:
 - Submit and verify there are no runtime errors in the browser console.
 
 ---
+
+## 🔐 Dependency Security
+
+To ensure a secure development environment:
+
+```bash
+# Check for vulnerabilities
+npm audit
+
+# Automatically fix issues
+npm audit fix
+```
+> We recommend running audits regularly and keeping dependencies up to date.
+
 
 ## 🤝 Contributing
 
