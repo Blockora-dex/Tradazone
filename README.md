@@ -165,6 +165,35 @@ tradazone/
 
 ---
 
+## 📐 Architectural Decision Records (ADR)
+
+### ADR 001: Selection of Tech Stack & Multi-chain Strategy
+
+**Status**: Accepted
+
+**Context**: 
+Tradazone aims to provide a seamless invoicing and payment experience across disparate blockchain ecosystems (Stellar, Starknet, EVM). This requires a frontend architecture that is highly performant, scalable, and capable of managing complex, asynchronous multi-chain states while maintaining a premium user interface.
+
+**Decision**:
+We have adopted the following core architectural components:
+1.  **Foundation**: **React 19** and **Vite 7**.
+2.  **Styling**: **Tailwind CSS v3** for a utility-first design system.
+3.  **State Management**: **React Context API** for global state (Auth and Data).
+4.  **Integration Strategy**: A **Unified `AuthContext`** that abstracts blockchain-specific wallet logic (Freighter, Starknet.js, Ethers.js) into a single authentication interface.
+
+**Rationale**:
+- **Why Vite 7?**: Superior development velocity via instant HMR and highly optimized production builds using Rollup, essential for modern dApp development workflows.
+- **Why React 19?**: Future-proofing the application with modern primitives (Actions, Transitions) that simplify the handling of asynchronous blockchain transactions and state updates.
+- **Why Tailwind CSS?**: Facilitates the creation of a "premium" aesthetic with zero runtime CSS overhead, ensuring the application remains fast even as the UI complexity grows.
+- **Why Context API?**: After evaluating Redux and Zustand, the native Context API was chosen for its simplicity and direct alignment with React 19’s data-fetching patterns, which is sufficient for the application's current and projected state complexity.
+- **Why Unified Auth?**: Centralizing multi-chain logic in a single `AuthContext` reduces component-level complexity, simplifies protected route management, and provides a consistent developer experience when adding support for new networks.
+
+**Consequences**:
+- **Positive**: Lightweight bundle size, ultra-fast UI response times, and a clear, modular architecture that lowers the barrier to entry for new contributors.
+- **Negative**: Requires manual implementation of complex side effects that more prescriptive state management libraries would otherwise automate.
+
+---
+
 ## 🤝 Contributing
 
 Contributions, bug reports, and feature suggestions are all welcome!
