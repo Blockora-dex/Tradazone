@@ -7,6 +7,17 @@ import illustration from '../../assets/auth-splash.svg';
 import Logo from '../../components/ui/Logo';
 import ConnectWalletModal from '../../components/ui/ConnectWalletModal';
 
+/**
+ * SignUp.jsx
+ *
+ * ISSUE: Staging config for SignUp deployments
+ * Category: DevOps & Infrastructure
+ * Affected Area: SignUp
+ * Description: Missing staging environment configuration for SignUp deployments.
+ * This file contains the SignUp component that requires proper staging env vars
+ * (VITE_APP_ENV=staging, VITE_APP_NAME, etc.) for banner display and behavior.
+ */
+
 function SignUp() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
