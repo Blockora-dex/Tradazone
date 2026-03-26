@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { AuthProvider, useAuth } from '../context/AuthContext';
+import { renderHook, act, render } from '@testing-library/react';
+import { AuthProvider, useAuth, useAuthUser } from '../context/AuthContext';
 import { STORAGE_PREFIX } from '../config/env';
 
 // Keys must match what AuthContext derives from STORAGE_PREFIX
@@ -158,6 +158,54 @@ describe('useAuth', () => {
   it('throws when used outside AuthProvider', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => renderHook(() => useAuth())).toThrow('useAuth must be used within an AuthProvider');
+    spy.mockRestore();
+  });
+});
+
+describe('useAuthUser', () => {
+  it('does not re-render for wallet-only updates', () => {
+    let authApi;
+    let userRenderCount = 0;
+
+    function AuthControls() {
+      authApi = useAuth();
+      return null;
+    }
+
+    function UserConsumer() {
+      useAuthUser();
+      userRenderCount += 1;
+      return null;
+    }
+
+    render(
+      <AuthProvider>
+        <AuthControls />
+        <UserConsumer />
+      </AuthProvider>
+    );
+
+    expect(userRenderCount).toBe(1);
+
+    act(() => {
+      authApi.setWallet((current) => ({
+        ...current,
+        balance: String(Number(current.balance || '0') + 1),
+      }));
+    });
+
+    expect(userRenderCount).toBe(1);
+
+    act(() => {
+      authApi.login({ id: '99', name: 'Profile User', email: 'profile@example.com' });
+    });
+
+    expect(userRenderCount).toBe(2);
+  });
+
+  it('throws when used outside AuthProvider', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => renderHook(() => useAuthUser())).toThrow('useAuthUser must be used within an AuthProvider');
     spy.mockRestore();
   });
 });

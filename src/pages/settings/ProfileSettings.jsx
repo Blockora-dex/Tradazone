@@ -1,17 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Input from '../../components/forms/Input';
 import Button from '../../components/forms/Button';
-import { useAuth } from '../../context/AuthContext';
+import { useAuthUser } from '../../context/AuthContext';
 
 // BUG FIX: Form submission succeeded without validating required fields (name, email).
 // Added a `errors` state and a validate() guard in handleSubmit so the form
 // cannot be submitted with blank required fields.
 function ProfileSettings() {
-    const { user } = useAuth();
+    // ISSUE #76: this page only needs the persisted user profile fields.
+    // Subscribing to the entire auth context caused unrelated wallet/runtime
+    // updates to redraw the whole settings form while the user was editing it.
+    const user = useAuthUser();
     const [formData, setFormData] = useState({
         name: user.name || '', email: user.email || '', phone: '', company: '', address: ''
     });
     const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        setFormData((current) => ({
+            ...current,
+            name: user.name || '',
+            email: user.email || '',
+        }));
+    }, [user.email, user.name]);
 
     const validate = () => {
         const next = {};
