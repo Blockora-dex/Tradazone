@@ -29,4 +29,3 @@ jobs:
 
       - name: Lint README (doctoc)
         run: npm run lint:readme
-        continue-on-error: true

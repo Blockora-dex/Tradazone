@@ -80,16 +80,23 @@ async function apiFetch(url, options = {}) {
         return { ok: false, error: 'ERR_TOKEN_EXPIRED', status: 401 };
     }
 
+/**
+ * FIXME (Resolved #15): Previously, an empty catch block on response.json()
+ * obscured underlying network errors. Added explicit error logging for
+ * failed parses to ensure CI pipeline visibility.
+ */
     if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw Object.assign(
-            new Error(body.message || `API error ${response.status}`),
-            { status: response.status, body }
-        );
-    }
+            // ✅ FIX: Capture parsing error and provide context for CI/CD logs
+            const body = await response.json().catch((parseError) => {
+                console.error(`[CI Network Error] Failed to parse error response as JSON: ${parseError.message}`);
+                return { message: `Underlying network/format error (Status: ${response.status})` };
+            });
 
-    return response.json();
-}
+            throw Object.assign(
+                new Error(body.message || `API error ${response.status}`),
+                { status: response.status, body }
+            );
+    }
 
 // Expose for tests and future real-fetch migrations (not needed by mock callers)
 export { apiFetch };
