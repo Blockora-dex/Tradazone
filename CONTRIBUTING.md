@@ -2,6 +2,13 @@
 
 This guide is the onboarding reference for contributors, with focused notes for the SignUp flow and shared contributor workflow.
 
+## Architecture decisions (ADRs)
+
+Recorded decisions for stack selection:
+
+- **API gateway / HTTP boundary** — `docs/adr/001-api-gateway-stack.md` (Issue #201)
+- **App routing** (React Router, guards, basename) — `docs/adr/002-app-routing-stack.md` (Issue #202)
+
 ## Development Setup
 
 ```bash
@@ -48,6 +55,31 @@ npm run lint
 # Verify build
 npm run build
 ```
+
+## ConnectWalletModal onboarding
+
+Primary file: `src/components/ui/ConnectWalletModal.jsx`
+
+This modal is the shared UI for connecting Stellar, Starknet, EVM, and Solana-related wallets. Changes here affect Sign-in, Sign-up, Payments, and mail checkout flows.
+
+**Dependencies to know before editing**
+
+- `useAuth()` from `src/context/AuthContext.jsx` — exposes `completeWalletLogin`, `installed` (includes EIP-6963 `discovered` providers), `availableWallets`, and related session APIs the modal lists and connects through.
+- `useLobstr()` from `src/hooks/useLobstr.js` — LOBSTR (Stellar) connect flow used inside the modal.
+- EIP-6963 discovery lives in `src/utils/wallet-discovery.js` and is wired through `AuthContext` (not imported directly in the modal).
+- Optional props: `isOpen`, `onClose`, `onConnect` (success callback), `connectWalletFn` (defaults to `useAuth().connectWallet` when passed from pages; tests may inject a stub).
+
+**Conventions**
+
+- Keep provider-specific logic inside the modal or small hooks; pages should only pass callbacks and open/close state.
+- New wallet types: extend connection in `AuthContext` / discovery helpers as needed, surface a clear error state in the modal, and avoid logging secrets or full addresses in production builds.
+- For EVM, prefer EIP-6963 provider selection (`installed.discovered` / `rdns`) over assuming a single `window.ethereum`.
+
+**Manual test checklist**
+
+- Open/close from Sign-in and Sign-up without console errors.
+- Connect with at least one installed wallet path (e.g. LOBSTR or an injected EVM wallet) and confirm `onConnect` runs and navigation/session match the host page’s expectations.
+- Payment settings and mail checkout: modal still receives the correct `connectWalletFn` when the page overrides it.
 
 ## SignUp Onboarding Guide
 

@@ -1,3 +1,9 @@
+/**
+ * App routing — React Router stack
+ *
+ * ADR-002: docs/adr/002-app-routing-stack.md (Issue #202)
+ * - BrowserRouter + nested Routes; protected shell via PrivateRoute + Layout.
+ */
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/routing/PrivateRoute';

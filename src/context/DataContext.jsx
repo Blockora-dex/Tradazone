@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { dispatchWebhook, setWebhookUrl, getWebhookUrl } from '../services/webhook';
 
 const DataContext = createContext(null);
@@ -19,11 +20,14 @@ function save(key, data) {
 
 /* ---------- Provider ---------- */
 export function DataProvider({ children }) {
-    // Clear persisted data so the app starts as a fresh new user
-    localStorage.removeItem(KEYS.customers);
-    localStorage.removeItem(KEYS.invoices);
-    localStorage.removeItem(KEYS.checkouts);
-    localStorage.removeItem(KEYS.items);
+    // Clear persisted data once on mount so the app starts as a fresh new user
+    // (avoid clearing on every render — that races with in-flight saves).
+    useEffect(() => {
+        localStorage.removeItem(KEYS.customers);
+        localStorage.removeItem(KEYS.invoices);
+        localStorage.removeItem(KEYS.checkouts);
+        localStorage.removeItem(KEYS.items);
+    }, []);
 
     const [customers, setCustomers] = useState([]);
     const [invoices, setInvoices] = useState([]);
@@ -157,15 +161,17 @@ export function DataProvider({ children }) {
     const markCheckoutPaid = useCallback(
         (checkoutId, customerId, walletType = '') => {
             let paidCheckout;
-            setCheckouts((prev) => {
-                const next = prev.map((c) =>
-                    c.id === checkoutId
-                        ? { ...c, status: 'paid', payments: c.payments + 1 }
-                        : c
-                );
-                paidCheckout = next.find((c) => c.id === checkoutId);
-                save(KEYS.checkouts, next);
-                return next;
+            flushSync(() => {
+                setCheckouts((prev) => {
+                    const next = prev.map((c) =>
+                        c.id === checkoutId
+                            ? { ...c, status: 'paid', payments: c.payments + 1 }
+                            : c
+                    );
+                    paidCheckout = next.find((c) => c.id === checkoutId);
+                    save(KEYS.checkouts, next);
+                    return next;
+                });
             });
             if (customerId) {
                 setCustomers((prev) => {
