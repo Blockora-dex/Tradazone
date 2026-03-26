@@ -147,9 +147,22 @@ The `SignUp` page (`src/pages/auth/SignUp.jsx`) is the entry point for new users
 To modify the post-connection logic, look at the `handleConnectSuccess` function:
 ```javascript
 const handleConnectSuccess = () => {
-    // Mark as first-time user to trigger WelcomeModal onboarding
-    localStorage.setItem('tradazone_onboarded', 'false');
-    navigate(redirectTo, { replace: true });
+    /**
+     * ISSUE: Missing guard can cause React crashes in edge environments.
+     * - `localStorage` access can throw (blocked storage, quota exceeded, privacy mode, etc.).
+     * - `redirectTo` should be treated as potentially malformed; always default/sanitize.
+     */
+    // Mark as first-time user to trigger WelcomeModal onboarding (best-effort)
+    try {
+        localStorage.setItem('tradazone_onboarded', 'false');
+    } catch {
+        // Storage is non-critical; proceed without blocking navigation.
+    }
+    const safeRedirectTo =
+        typeof redirectTo === 'string' && redirectTo.startsWith('/')
+            ? redirectTo
+            : '/';
+    navigate(safeRedirectTo, { replace: true });
 };
 ```
 

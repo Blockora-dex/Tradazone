@@ -11,6 +11,7 @@ import { Plus, Search, Users } from 'lucide-react';
 import DataTable from '../../components/tables/DataTable';
 import EmptyState from '../../components/ui/EmptyState';
 import { useData } from '../../context/DataContext';
+import { formatUtcDate } from '../../utils/date';
 
 function CustomerList() {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ function CustomerList() {
         { key: 'phone', header: 'Phone' },
         { key: 'totalSpent', header: 'Total Spent', render: (value, row) => `${value} ${row.currency}` },
         { key: 'invoiceCount', header: 'Invoices' },
-        { key: 'createdAt', header: 'Created' }
+        { key: 'createdAt', header: 'Created', render: (value) => formatUtcDate(value) }
     ];
 
     return (

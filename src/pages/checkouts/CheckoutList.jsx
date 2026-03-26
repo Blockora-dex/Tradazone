@@ -4,6 +4,7 @@ import DataTable from '../../components/tables/DataTable';
 import StatusBadge from '../../components/tables/StatusBadge';
 import EmptyState from '../../components/ui/EmptyState';
 import { useData } from '../../context/DataContext';
+import { formatUtcDate } from '../../utils/date';
 
 function CheckoutList() {
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ function CheckoutList() {
         { key: 'status', header: 'Status', render: (value) => <StatusBadge status={value} /> },
         { key: 'views', header: 'Views' },
         { key: 'payments', header: 'Payments' },
-        { key: 'createdAt', header: 'Created' }
+        { key: 'createdAt', header: 'Created', render: (value) => formatUtcDate(value) }
     ];
 
     return (

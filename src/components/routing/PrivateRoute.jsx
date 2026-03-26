@@ -6,6 +6,8 @@ import { loadSession } from '../../context/AuthContext';
 /**
  * PrivateRoute
  *
+ * Part of the ADR-002 routing model (docs/adr/002-app-routing-stack.md, Issue #202).
+ *
  * Guards protected routes by checking BOTH the in-memory React auth state
  * AND the live localStorage session on every render.
  *

@@ -3,6 +3,7 @@ import { ArrowLeft, Copy, Link as LinkIcon, Edit, Trash2, ExternalLink } from 'l
 import Button from '../../components/forms/Button';
 import StatusBadge from '../../components/tables/StatusBadge';
 import { useData } from '../../context/DataContext';
+import { formatUtcDate } from '../../utils/date';
 
 function CheckoutDetail() {
     const { id } = useParams();
@@ -39,7 +40,7 @@ function CheckoutDetail() {
                     <div><span className="block text-xs text-t-muted mb-1">Description</span><span className="text-sm font-medium">{checkout.description}</span></div>
                     <div><span className="block text-xs text-t-muted mb-1">Views</span><span className="text-sm font-medium">{checkout.views}</span></div>
                     <div><span className="block text-xs text-t-muted mb-1">Payments</span><span className="text-sm font-medium">{checkout.payments}</span></div>
-                    <div><span className="block text-xs text-t-muted mb-1">Created</span><span className="text-sm font-medium">{checkout.createdAt}</span></div>
+                    <div><span className="block text-xs text-t-muted mb-1">Created</span><span className="text-sm font-medium">{formatUtcDate(checkout.createdAt)}</span></div>
                 </div>
             </div>
 

@@ -1,6 +1,16 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Build size budget limits in KB
+const SIZE_LIMITS = {
+  // Maximum size for any single chunk (KB)
+  maxChunkSize: 500,
+  // Maximum size for the DataContext chunk specifically (KB)
+  maxDataContextSize: 50,
+  // Maximum total bundle size (KB)
+  maxTotalSize: 1000,
+};
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
@@ -12,17 +22,27 @@ export default defineConfig(({ mode }) => {
       // Enable compressed size reporting for monitoring bundle sizes
       reportCompressedSize: true,
       // Set chunk size warnings to prevent large bundles
-      chunkSizeWarningLimit: 500, // KB
+      chunkSizeWarningLimit: SIZE_LIMITS.maxChunkSize,
       rollupOptions: {
         output: {
           // Manual chunking to optimize loading
-          manualChunks: {
+          manualChunks: (id) => {
+            // Separate DataContext into its own chunk for size monitoring
+            if (id.includes('DataContext')) {
+              return 'data-context';
+            }
             // Separate wallet-related code into its own chunk
-            wallet: ['@lobstrco/signer-extension-api', 'get-starknet', 'ethers'],
+            if (id.includes('@lobstrco/signer-extension-api') || id.includes('get-starknet') || id.includes('ethers')) {
+              return 'wallet';
+            }
             // UI libraries
-            ui: ['lucide-react'],
+            if (id.includes('lucide-react')) {
+              return 'ui';
+            }
             // Auth context and related
-            auth: ['react-router-dom'],
+            if (id.includes('react-router-dom')) {
+              return 'auth';
+            }
           },
         },
       },

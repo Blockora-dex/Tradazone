@@ -41,6 +41,21 @@ describe('addCustomer', () => {
     });
     expect(c1.id).not.toBe(c2.id);
   });
+
+    it('sets createdAt to a full ISO timestamp', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-01-02T03:04:05.000Z'));
+
+        const { result } = renderHook(() => useData(), { wrapper });
+        let customer;
+        act(() => {
+            customer = result.current.addCustomer({ name: 'Alice', email: 'alice@example.com' });
+        });
+
+        expect(customer.createdAt).toBe('2026-01-02T03:04:05.000Z');
+
+        vi.useRealTimers();
+    });
 });
 
 // ─── addItem ─────────────────────────────────────────────────────────────────
@@ -89,7 +104,33 @@ describe('addInvoice', () => {
     });
     // 3 × 200 = 600
     expect(invoice.amount).toBe('600');
+        // Pin day semantics to UTC midnight ISO
+        expect(invoice.dueDate).toBe('2025-12-31T00:00:00.000Z');
   });
+
+    it('sets createdAt to full ISO and normalizes dueDate', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-02-03T04:05:06.000Z'));
+
+        const { result } = renderHook(() => useData(), { wrapper });
+        let customer, item, invoice;
+        act(() => {
+            customer = result.current.addCustomer({ name: 'Alice', email: 'alice@example.com' });
+            item = result.current.addItem({ name: 'Dev', price: '200' });
+        });
+        act(() => {
+            invoice = result.current.addInvoice({
+                customerId: customer.id,
+                dueDate: '2025-12-31',
+                items: [{ itemId: item.id, quantity: 1, price: '200' }],
+            });
+        });
+
+        expect(invoice.createdAt).toBe('2026-02-03T04:05:06.000Z');
+        expect(invoice.dueDate).toBe('2025-12-31T00:00:00.000Z');
+
+        vi.useRealTimers();
+    });
 
   it('generates sequential INV-XXX ids', () => {
     const { result } = renderHook(() => useData(), { wrapper });

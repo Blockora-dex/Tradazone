@@ -28,7 +28,7 @@ function Header({ onMenuToggle }) {
                 <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">
                     <img
                         src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=3C3CEF&color=fff`}
-                        alt={user.name}
+                        alt={user.name || 'User avatar'}
                         className="w-full h-full object-cover"
                     />
                 </div>

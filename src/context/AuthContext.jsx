@@ -34,11 +34,14 @@
  * @module AuthContext
  */
 
+/* eslint-disable react-refresh/only-export-components -- provider, hooks, and session helpers are intentionally co-exported */
+
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { STORAGE_PREFIX, SESSION_TTL_MS, ALLOW_MOCK_WALLET } from '../config/env';
 import { useDiscoveredProviders } from '../utils/wallet-discovery';
 
 const AuthContext = createContext(null);
+const AuthUserContext = createContext(null);
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -356,7 +359,7 @@ export function AuthProvider({ children }) {
      * @param {WalletType} type - Wallet network type.
      * @returns {void}
      */
-    const completeWalletLogin = (address, type) => {
+    const completeWalletLogin = useCallback((address, type) => {
         const currency = type === "stellar" ? "XLM" : "STRK";
         const chainId  = type === "stellar" ? "stellar" : "";
 
@@ -378,7 +381,7 @@ export function AuthProvider({ children }) {
         };
         setUser(userData);
         saveSession(userData);
-    };
+    }, []);
 
     // Last-connected wallet address for "welcome back" hint
     const lastWallet = localStorage.getItem(WALLET_KEY);
@@ -391,22 +394,22 @@ export function AuthProvider({ children }) {
      * @param {UserData} userData - User data from external auth provider.
      * @returns {void}
      */
-    const login = (userData) => {
+    const login = useCallback((userData) => {
         const authed = { ...userData, isAuthenticated: true };
         setUser(authed);
         saveSession(authed);
-    };
+    }, []);
 
     /**
      * Clears session data and resets all state to unauthenticated defaults.
      * @returns {void}
      */
-    const logout = () => {
+    const logout = useCallback(() => {
         clearSession();
         setUser({ ...EMPTY_USER });
         setWallet({ address: "", balance: "0", currency: "STRK", isConnected: false, chainId: "" });
         setWalletType(null);
-    };
+    }, []);
 
     // ── Starknet (Argent / Braavos) ──────────────────────────────────────────
 
@@ -436,7 +439,7 @@ export function AuthProvider({ children }) {
      *
      * @returns {Promise<ConnectWalletResult>}
      */
-    const connectStarknetWallet = async () => {
+    const connectStarknetWallet = useCallback(async () => {
         try {
             const starknetProvider = window.starknet_argentX || window.starknet;
 
@@ -532,7 +535,7 @@ export function AuthProvider({ children }) {
             saveSession(userData);
             return { success: true };
         }
-    };
+    }, [logout]);
 
     // ── Stellar (LOBSTR via AuthContext — alternative path) ─────────────────
 
@@ -552,7 +555,7 @@ export function AuthProvider({ children }) {
      *
      * @returns {Promise<ConnectWalletResult>}
      */
-    const connectStellarWallet = async () => {
+    const connectStellarWallet = useCallback(async () => {
         try {
             const lobstr = await import("@lobstrco/signer-extension-api");
 
@@ -607,7 +610,7 @@ export function AuthProvider({ children }) {
 
             return { success: false, error: "failed", message: error.message };
         }
-    };
+    }, []);
 
     // ── EVM / Browser Wallets ────────────────────────────────────────────────
 
@@ -633,7 +636,7 @@ export function AuthProvider({ children }) {
      *   Optional EIP-6963 provider. When `null`, falls back to `window.ethereum`.
      * @returns {Promise<ConnectWalletResult>}
      */
-    const connectEvmWallet = async (specificProvider = null) => {
+    const connectEvmWallet = useCallback(async (specificProvider = null) => {
         // Guard: prevent double-invocation (returned to caller as an error code)
         if (isConnecting) return { success: false, error: "already_connecting" };
 
@@ -697,6 +700,7 @@ export function AuthProvider({ children }) {
             return { success: true };
         } catch (error) {
             console.error("EVM wallet connect failed:", error);
+            setIsConnecting(false);
 
             if (error.message?.includes("not installed") || error.message?.includes("EVM")) {
                 return { success: false, error: "not_installed" };
@@ -706,11 +710,9 @@ export function AuthProvider({ children }) {
             if (error.code === 4001 || error.message?.includes("rejected")) {
                 return { success: false, error: "rejected" };
             }
-
-            setIsConnecting(false);
             return { success: false, error: "failed" };
         }
-    };
+    }, [isConnecting, logout]);
 
     // ── Public: connectWallet ────────────────────────────────────────────────
 
@@ -733,12 +735,12 @@ export function AuthProvider({ children }) {
      *   Optional EIP-6963 provider object. Only used when `type === 'evm'`.
      * @returns {Promise<ConnectWalletResult>}
      */
-    const connectWallet = async (type = "starknet", provider = null) => {
+    const connectWallet = useCallback(async (type = "starknet", provider = null) => {
         if (type === "stellar")          return connectStellarWallet();
         if (type === "evm")              return connectEvmWallet(provider);
         if (type === "starknet_generic") return connectStarknetWallet();
         return connectStarknetWallet();
-    };
+    }, [connectEvmWallet, connectStarknetWallet, connectStellarWallet]);
 
     // ── disconnectWallet ─────────────────────────────────────────────────────
 
@@ -752,18 +754,18 @@ export function AuthProvider({ children }) {
      *
      * @returns {Promise<void>}
      */
-    const disconnectWallet = async () => {
+    const disconnectWallet = useCallback(async () => {
         if (walletType === "starknet") {
             try {
                 const { disconnect } = await import("get-starknet");
                 await disconnect();
-            } catch (_) {
+            } catch {
                 // Swallow: disconnect is best-effort; always clear local state
             }
 
         }
         logout();
-    };
+    }, [logout, walletType]);
 
     // ── disconnectAll ────────────────────────────────────────────────────────
 
@@ -779,40 +781,58 @@ export function AuthProvider({ children }) {
      *
      * @returns {Promise<void>}
      */
-    const disconnectAll = async () => {
+    const disconnectAll = useCallback(async () => {
         if (walletType === "starknet") {
             try {
                 const { disconnect } = await import("get-starknet");
                 await disconnect();
-            } catch (_) {
+            } catch {
                 // best-effort
             }
         }
         localStorage.removeItem(WALLET_KEY);
         logout();
-    };
+    }, [logout, walletType]);
+
+    const authContextValue = useMemo(() => ({
+        user,
+        setUser,
+        wallet,
+        setWallet,
+        walletType,
+        login,
+        logout,
+        connectWallet,
+        disconnectWallet,
+        disconnectAll,
+        completeWalletLogin,
+        lastWallet,
+        isConnecting,
+        installed,
+        availableWallets,
+    }), [
+        user,
+        wallet,
+        walletType,
+        login,
+        logout,
+        connectWallet,
+        disconnectWallet,
+        disconnectAll,
+        completeWalletLogin,
+        lastWallet,
+        isConnecting,
+        installed,
+        availableWallets,
+    ]);
 
     // ── Context value ────────────────────────────────────────────────────────
 
     return (
-        <AuthContext.Provider value={{
-            user,
-            setUser,
-            wallet,
-            setWallet,
-            walletType,
-            login,
-            logout,
-            connectWallet,
-            disconnectWallet,
-            disconnectAll,
-            completeWalletLogin,
-            lastWallet,
-            isConnecting,
-            installed,
-            availableWallets,
-        }}>
-            {children}
+        <AuthContext.Provider value={authContextValue}>
+            <AuthUserContext.Provider value={user}>
+                {children}
+            </AuthUserContext.Provider>
         </AuthContext.Provider>
     );
 }
@@ -833,10 +853,27 @@ export function AuthProvider({ children }) {
  * @example
  * const { connectWallet, user, wallet } = useAuth();
  */
-// eslint-disable-next-line react-refresh/only-export-components
-
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) throw new Error("useAuth must be used within an AuthProvider");
+    return context;
+}
+
+/**
+ * Returns only the authenticated user snapshot.
+ *
+ * ISSUE: #76
+ * ProfileSettings only needs identity fields to seed its local form state.
+ * Keeping that page subscribed to the full auth context caused it to re-render
+ * for unrelated wallet-discovery and connection updates. This narrow hook
+ * isolates user-only consumers from those broader context churns.
+ *
+ * @returns {UserData}
+ * @throws {Error} If called outside an AuthProvider.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAuthUser() {
+    const context = useContext(AuthUserContext);
+    if (context === null) throw new Error("useAuthUser must be used within an AuthProvider");
     return context;
 }

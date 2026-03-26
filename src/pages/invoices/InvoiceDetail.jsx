@@ -33,6 +33,7 @@ import StatusBadge from '../../components/tables/StatusBadge';
 import InvoiceLayout from '../../components/invoice/InvoiceLayout';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
+import { formatUtcDate } from '../../utils/date';
 
 function InvoiceDetail() {
     const { id } = useParams();
@@ -94,8 +95,8 @@ function InvoiceDetail() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                     <div><span className="block text-xs text-t-muted mb-1">Customer</span><span className="text-sm font-medium">{invoice.customer}</span></div>
                     <div><span className="block text-xs text-t-muted mb-1">Email</span><span className="text-sm font-medium">{customer?.email || 'N/A'}</span></div>
-                    <div><span className="block text-xs text-t-muted mb-1">Due Date</span><span className="text-sm font-medium">{invoice.dueDate}</span></div>
-                    <div><span className="block text-xs text-t-muted mb-1">Created</span><span className="text-sm font-medium">{invoice.createdAt}</span></div>
+                    <div><span className="block text-xs text-t-muted mb-1">Due Date</span><span className="text-sm font-medium">{formatUtcDate(invoice.dueDate)}</span></div>
+                    <div><span className="block text-xs text-t-muted mb-1">Created</span><span className="text-sm font-medium">{formatUtcDate(invoice.createdAt)}</span></div>
                 </div>
             </div>
 

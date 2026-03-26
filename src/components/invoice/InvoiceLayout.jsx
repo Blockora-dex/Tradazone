@@ -3,6 +3,7 @@ import InvoiceHeader from './InvoiceHeader';
 import InvoiceTable from './InvoiceTable';
 import InvoiceSummary from './InvoiceSummary';
 import InvoiceFooter from './InvoiceFooter';
+import { formatUtcDate } from '../../utils/date';
 
 const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sender }, ref) {
     const subtotal = invoice.items.reduce(
@@ -25,11 +26,11 @@ const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sen
             <div className="grid grid-cols-3 border-t border-gray-200 py-4 mb-6">
                 <div>
                     <span className="block text-xs font-bold text-t-primary mb-1">Invoice date:</span>
-                    <span className="text-sm text-t-muted">{invoice.createdAt}</span>
+                    <span className="text-sm text-t-muted">{formatUtcDate(invoice.createdAt)}</span>
                 </div>
                 <div>
                     <span className="block text-xs font-bold text-t-primary mb-1">Due date:</span>
-                    <span className="text-sm text-t-muted">{invoice.dueDate}</span>
+                    <span className="text-sm text-t-muted">{formatUtcDate(invoice.dueDate)}</span>
                 </div>
                 <div>
                     <span className="block text-xs font-bold text-brand mb-1">Invoice number:</span>

@@ -4,6 +4,7 @@ import DataTable from '../../components/tables/DataTable';
 import StatusBadge from '../../components/tables/StatusBadge';
 import EmptyState from '../../components/ui/EmptyState';
 import { useData } from '../../context/DataContext';
+import { formatUtcDate } from '../../utils/date';
 
 function InvoiceList() {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ function InvoiceList() {
         { key: 'customer', header: 'Customer' },
         { key: 'amount', header: 'Amount', render: (value, row) => `${value} ${row.currency}` },
         { key: 'status', header: 'Status', render: (value) => <StatusBadge status={value} /> },
-        { key: 'dueDate', header: 'Due Date' },
+        { key: 'dueDate', header: 'Due Date', render: (value) => formatUtcDate(value) },
         {
             key: 'actions',
             header: '',

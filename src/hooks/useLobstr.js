@@ -23,9 +23,9 @@ import { waitForLobstr } from "../utils/detectLobstr";
  *
  * @property {true}   success       - Always `true` on success.
  * @property {string} address       - The Stellar public key (G‑address) of the
- *   connected account, e.g. `"GABC...XYZ"`.
+ * connected account, e.g. `"GABC...XYZ"`.
  * @property {'PUBLIC' | 'TESTNET'} network - The Stellar network the wallet
- *   is operating on. Currently always `"PUBLIC"` because LOBSTR targets mainnet.
+ * is operating on. Currently always `"PUBLIC"` because LOBSTR targets mainnet.
  */
 
 /**
@@ -34,12 +34,12 @@ import { waitForLobstr } from "../utils/detectLobstr";
  *
  * @property {false}  success - Always `false` on failure.
  * @property {string} error   - Error token. Known values:
- *   - `"NOT_INSTALLED"` — LOBSTR extension not detected after `timeout` ms.
- *   - `"LOCKED"`        — Extension present but password-locked (thrown by
- *     `getPublicKey` when the vault is sealed).
- *   - `"ACCESS_DENIED"` — User dismissed or denied the connection prompt, or
- *     `getPublicKey` returned an empty/invalid key.
- *   - Any other string — Unexpected error from the extension API.
+ * - `"NOT_INSTALLED"` — LOBSTR extension not detected after `timeout` ms.
+ * - `"LOCKED"`        — Extension present but password-locked (thrown by
+ * `getPublicKey` when the vault is sealed).
+ * - `"ACCESS_DENIED"` — User dismissed or denied the connection prompt, or
+ * `getPublicKey` returned an empty/invalid key.
+ * - Any other string — Unexpected error from the extension API.
  */
 
 /**
@@ -52,27 +52,27 @@ import { waitForLobstr } from "../utils/detectLobstr";
  * Shape of the object returned by {@link useLobstr}.
  *
  * @property {() => Promise<LobstrConnectResult | null>} connect
- *   Initiates the LOBSTR connection flow:
- *   1. Waits up to 3 s for `window.lobstr` to appear (`waitForLobstr`).
- *   2. Calls `isConnected()` as a soft check.
- *   3. Calls `getPublicKey()` — this prompts the user in the extension.
- *   4. Normalises the public-key response into a plain `address` string.
+ * Initiates the LOBSTR connection flow:
+ * 1. Waits up to 3 s for `window.lobstr` to appear (`waitForLobstr`).
+ * 2. Calls `isConnected()` as a soft check.
+ * 3. Calls `getPublicKey()` — this prompts the user in the extension.
+ * 4. Normalises the public-key response into a plain `address` string.
  *
- *   Returns `null` (not a `LobstrConnectResult`) if a connection attempt is
- *   already in progress (`isConnecting === true`), acting as a no-op guard.
+ * Returns `null` (not a `LobstrConnectResult`) if a connection attempt is
+ * already in progress (`isConnecting === true`), acting as a no-op guard.
  *
  * @property {boolean}      isConnecting - `true` while `connect()` is awaiting
- *   a response from the extension. Used to show spinners and disable buttons.
+ * a response from the extension. Used to show spinners and disable buttons.
  *
  * @property {string | null} publicKey  - The connected Stellar public key after
- *   a successful call to `connect()`. `null` before connection or after an error.
+ * a successful call to `connect()`. `null` before connection or after an error.
  *
  * @property {'PUBLIC' | 'TESTNET' | null} network - The Stellar network string
- *   after a successful connection. `null` before connection.
+ * after a successful connection. `null` before connection.
  *
  * @property {string | null} error - The raw error token from the most recent
- *   failed `connect()` call. `null` when no error has occurred or after a
- *   successful connection.
+ * failed `connect()` call. `null` when no error has occurred or after a
+ * successful connection.
  */
 
 // ---------------------------------------------------------------------------
@@ -90,10 +90,10 @@ import { waitForLobstr } from "../utils/detectLobstr";
  *
  * const result = await connect();
  * if (result?.success) {
- *   // result.address — Stellar G-address
- *   // result.network — 'PUBLIC'
+ * // result.address — Stellar G-address
+ * // result.network — 'PUBLIC'
  * } else {
- *   // result.error — 'NOT_INSTALLED' | 'LOCKED' | 'ACCESS_DENIED' | ...
+ * // result.error — 'NOT_INSTALLED' | 'LOCKED' | 'ACCESS_DENIED' | ...
  * }
  * ```
  *
@@ -133,7 +133,7 @@ export function useLobstr() {
    * Initiates the LOBSTR connection flow.
    *
    * @returns {Promise<LobstrConnectResult | null>} Resolves with a result
-   *   object, or `null` if a connection is already in progress.
+   * object, or `null` if a connection is already in progress.
    */
   const connect = useCallback(async () => {
     // Guard: prevent concurrent connection attempts
@@ -183,7 +183,6 @@ export function useLobstr() {
 
       setPublicKey(address);
       setNetwork(currentNetwork);
-      console.log(`[LOBSTR] Connected (${currentNetwork}):`, address);
 
       return { success: true, address, network: currentNetwork };
 

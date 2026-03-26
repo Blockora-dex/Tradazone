@@ -1,6 +1,9 @@
 /**
  * @fileoverview ConnectWalletModal — multi-network wallet connection modal.
  *
+ * Onboarding for contributors: see CONTRIBUTING.md → "ConnectWalletModal onboarding"
+ * (GitHub Issue #203).
+ *
  * ISSUE: #150 (Build size limits for ConnectWalletModal)
  * Category: DevOps & Infrastructure
  * Affected Area: ConnectWalletModal
@@ -141,7 +144,6 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
 
     const {
         completeWalletLogin,
-        isConnecting: isAuthConnecting,
         wallet,
         disconnectAll,
         installed,
@@ -153,11 +155,14 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
     // Reset transient state each time the modal is opened
     useEffect(() => {
         if (isOpen) {
+            // Intentional: modal open is the boundary for clearing wizard state.
+            /* eslint-disable react-hooks/set-state-in-effect -- reset UI when reopening */
             setConnecting(null);
             setError(null);
             setView('primary');
             setSearchQuery('');
             setFilterNetwork('all');
+            /* eslint-enable react-hooks/set-state-in-effect */
         }
     }, [isOpen]);
 

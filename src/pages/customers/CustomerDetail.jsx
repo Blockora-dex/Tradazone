@@ -4,6 +4,7 @@ import Button from '../../components/forms/Button';
 import DataTable from '../../components/tables/DataTable';
 import StatusBadge from '../../components/tables/StatusBadge';
 import { useData } from '../../context/DataContext';
+import { formatUtcDate } from '../../utils/date';
 
 function CustomerDetail() {
     const { id } = useParams();
@@ -43,7 +44,7 @@ function CustomerDetail() {
                     <div><span className="block text-xs text-t-muted mb-1">Phone</span><span className="text-sm font-medium">{customer.phone || 'Not provided'}</span></div>
                     <div><span className="block text-xs text-t-muted mb-1">Address</span><span className="text-sm font-medium">{customer.address || 'Not provided'}</span></div>
                     <div><span className="block text-xs text-t-muted mb-1">Total Spent</span><span className="text-sm font-medium">{customer.totalSpent} {customer.currency}</span></div>
-                    <div><span className="block text-xs text-t-muted mb-1">Customer Since</span><span className="text-sm font-medium">{customer.createdAt}</span></div>
+                    <div><span className="block text-xs text-t-muted mb-1">Customer Since</span><span className="text-sm font-medium">{formatUtcDate(customer.createdAt)}</span></div>
                 </div>
             </div>
 
