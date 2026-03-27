@@ -1,5 +1,7 @@
 /**
- * Issue #83: Missing request debouncing on the search input in InvoiceDetail.
+ * InvoiceDetail
+ *
+ * ISSUE: N+1 redundant renders in InvoiceDetail due to missing React.memo
  * Category: Performance & Scalability
  * * This fix introduces a debounced search filter for invoice line items to
  * optimize rendering performance and improve UX for large invoices.
@@ -90,17 +92,13 @@ function InvoiceDetail() {
     );
   }, [invoice, debouncedSearch]);
 
-  if (!invoice)
-    return (
-      <div className="p-8">
-        <p className="text-t-muted">Invoice not found</p>
-      </div>
-    );
+    const filteredItems = useMemo(() => {
+        if (!invoice) return [];
+        if (!debouncedSearch.trim()) return invoice.items;
 
-  const sender = {
-    name: user?.name || "Tradazone",
-    email: user?.email || "hello@tradazone.com",
-  };
+        const term = debouncedSearch.toLowerCase();
+        return invoice.items.filter((item) => item.name.toLowerCase().includes(term));
+    }, [invoice, debouncedSearch]);
 
   const calculateTotal = () => {
     return invoice.items.reduce(
@@ -207,93 +205,24 @@ function InvoiceDetail() {
         </div>
       </div>
 
-      <div className="bg-white border border-border rounded-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h2 className="text-base font-semibold">Items</h2>
+            <InvoiceMeta invoice={invoice} customer={customer} />
 
-          {/* Search Input for filtering line items */}
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-t-muted"
-              size={16}
+            <InvoiceItemsTable
+                searchTerm={searchTerm}
+                debouncedSearch={debouncedSearch}
+                onSearchChange={handleSearchChange}
+                filteredItems={filteredItems}
+                total={total}
             />
-            <input
-              type="text"
-              placeholder="Filter items by name..."
-              className="pl-10 pr-4 py-2 text-sm border border-border rounded-md w-full sm:w-64 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+
+            <PdfInvoicePreview
+                invoiceRef={invoiceRef}
+                invoice={invoice}
+                customer={customer}
+                sender={sender}
             />
-          </div>
         </div>
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left px-6 py-3 text-xs font-semibold text-t-muted uppercase tracking-wide bg-page">
-                Item
-              </th>
-              <th className="text-left px-6 py-3 text-xs font-semibold text-t-muted uppercase tracking-wide bg-page">
-                Quantity
-              </th>
-              <th className="text-left px-6 py-3 text-xs font-semibold text-t-muted uppercase tracking-wide bg-page">
-                Price
-              </th>
-              <th className="text-left px-6 py-3 text-xs font-semibold text-t-muted uppercase tracking-wide bg-page">
-                Total
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems.length > 0 ? (
-              filteredItems.map((item, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-border last:border-b-0 hover:bg-page/50 transition-colors"
-                >
-                  <td className="px-6 py-3 text-sm font-medium">{item.name}</td>
-                  <td className="px-6 py-3 text-sm">{item.quantity}</td>
-                  <td className="px-6 py-3 text-sm">{item.price} STRK</td>
-                  <td className="px-6 py-3 text-sm font-medium">
-                    {parseFloat(item.price) * item.quantity} STRK
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="px-6 py-12 text-center">
-                  <p className="text-sm text-t-muted">
-                    No items found matching "{debouncedSearch}"
-                  </p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-border">
-              <td
-                colSpan={3}
-                className="px-6 py-4 text-sm font-semibold text-right"
-              >
-                Total:
-              </td>
-              <td className="px-6 py-4 text-sm font-bold text-brand">
-                {calculateTotal()} STRK
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      <div className="fixed left-[-9999px] top-0">
-        <InvoiceLayout
-          ref={invoiceRef}
-          invoice={invoice}
-          customer={customer}
-          sender={sender}
-        />
-      </div>
-    </div>
-  );
+    );
 }
 
 export default InvoiceDetail;

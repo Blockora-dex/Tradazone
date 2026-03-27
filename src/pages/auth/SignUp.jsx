@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuthActions, useAuthUser } from '../../context/AuthContext';
 import { dispatchWebhook } from '../../services/webhook';
 import { IS_STAGING, APP_NAME } from '../../config/env';
 import illustration from '../../assets/auth-splash.svg';
@@ -42,6 +42,17 @@ import ConnectWalletModal from '../../components/ui/ConnectWalletModal';
  *   3. Staging banner — rendered only when IS_STAGING is true; must carry
  *      role="banner" and data-testid="staging-banner" for a11y and testing.
  * Tests: src/test/SignUp.test.jsx
+ *
+ * ISSUE: #57
+ * Category: Performance & Scalability
+ * Priority: Critical
+ * Affected Area: SignUp
+ * Description:
+ * SignUp previously subscribed to the monolithic AuthContext just to read
+ * `user` and `connectWallet`. That meant wallet discovery updates inside
+ * AuthProvider invalidated the entire SignUp route on every catalog change.
+ * The page now consumes narrow auth hooks so unrelated provider updates do not
+ * force a full SignUp re-render.
  */
 /**
  * SignUp page component - entry point for new users to connect their wallet.
@@ -55,7 +66,8 @@ import ConnectWalletModal from '../../components/ui/ConnectWalletModal';
 function SignUp() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { connectWallet, user } = useAuth();
+    const user = useAuthUser();
+    const { connectWallet } = useAuthActions();
 
     /** @type {boolean} */
     const [isModalOpen, setIsModalOpen] = useState(false);

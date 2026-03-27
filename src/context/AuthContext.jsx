@@ -100,6 +100,9 @@ import { useDiscoveredProviders } from '../utils/wallet-discovery';
 
 const AuthContext = createContext(null);
 const AuthUserContext = createContext(null);
+const AuthActionsContext = createContext(null);
+const AuthWalletStateContext = createContext(null);
+const AuthWalletCatalogContext = createContext(null);
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -288,6 +291,14 @@ const EMPTY_USER = {
     walletType: null,
 };
 
+const EMPTY_WALLET = {
+    address: "",
+    balance: "0",
+    currency: "STRK",
+    isConnected: false,
+    chainId: "",
+};
+
 // ---------------------------------------------------------------------------
 // Provider component
 // ---------------------------------------------------------------------------
@@ -327,8 +338,8 @@ export function AuthProvider({ children }) {
      * @type {[WalletState, React.Dispatch<React.SetStateAction<WalletState>>]}
      */
     const [wallet, setWallet] = useState({
+        ...EMPTY_WALLET,
         address: user.walletAddress || "",
-        balance: "0",
         currency: user.walletType === "stellar" ? "XLM" : "STRK",
         isConnected: !!user.walletAddress,
         chainId: user.walletType === "stellar" ? "stellar" : "",
@@ -492,7 +503,7 @@ export function AuthProvider({ children }) {
     const logout = useCallback(() => {
         clearSession();
         setUser({ ...EMPTY_USER });
-        setWallet({ address: "", balance: "0", currency: "STRK", isConnected: false, chainId: "" });
+        setWallet({ ...EMPTY_WALLET });
         setWalletType(null);
     }, []);
 
@@ -906,36 +917,54 @@ export function AuthProvider({ children }) {
         logout();
     }, [logout, walletType]);
 
-    const authContextValue = useMemo(() => ({
-        user,
+    const authActionsValue = useMemo(() => ({
         setUser,
-        wallet,
         setWallet,
-        walletType,
         login,
         logout,
         connectWallet,
         disconnectWallet,
         disconnectAll,
         completeWalletLogin,
+    }), [
+        login,
+        logout,
+        connectWallet,
+        disconnectWallet,
+        disconnectAll,
+        completeWalletLogin,
+    ]);
+
+    const authWalletStateValue = useMemo(() => ({
+        wallet,
+        walletType,
         lastWallet,
         isConnecting,
+    }), [
+        wallet,
+        walletType,
+        lastWallet,
+        isConnecting,
+    ]);
+
+    const authWalletCatalogValue = useMemo(() => ({
         installed,
         availableWallets,
     }), [
-        user,
-        wallet,
-        walletType,
-        login,
-        logout,
-        connectWallet,
-        disconnectWallet,
-        disconnectAll,
-        completeWalletLogin,
-        lastWallet,
-        isConnecting,
         installed,
         availableWallets,
+    ]);
+
+    const authContextValue = useMemo(() => ({
+        user,
+        ...authActionsValue,
+        ...authWalletStateValue,
+        ...authWalletCatalogValue,
+    }), [
+        user,
+        authActionsValue,
+        authWalletStateValue,
+        authWalletCatalogValue,
     ]);
 
     // ── Context value ────────────────────────────────────────────────────────
@@ -943,7 +972,13 @@ export function AuthProvider({ children }) {
     return (
         <AuthContext.Provider value={authContextValue}>
             <AuthUserContext.Provider value={user}>
-                {children}
+                <AuthActionsContext.Provider value={authActionsValue}>
+                    <AuthWalletStateContext.Provider value={authWalletStateValue}>
+                        <AuthWalletCatalogContext.Provider value={authWalletCatalogValue}>
+                            {children}
+                        </AuthWalletCatalogContext.Provider>
+                    </AuthWalletStateContext.Provider>
+                </AuthActionsContext.Provider>
             </AuthUserContext.Provider>
         </AuthContext.Provider>
     );
@@ -983,9 +1018,53 @@ export function useAuth() {
  * @returns {UserData}
  * @throws {Error} If called outside an AuthProvider.
  */
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuthUser() {
     const context = useContext(AuthUserContext);
     if (context === null) throw new Error("useAuthUser must be used within an AuthProvider");
+    return context;
+}
+
+/**
+ * Returns auth commands without subscribing to user, wallet, or wallet catalog
+ * updates.
+ *
+ * ISSUE: #57
+ * SignUp only needs stable connect/disconnect commands. Pulling them from the
+ * monolithic auth context caused unrelated discovery updates to re-render the
+ * route tree and modal. This selector-style hook isolates command-only
+ * consumers from that churn.
+ *
+ * @returns {Pick<AuthContextValue, 'setUser' | 'setWallet' | 'login' | 'logout' | 'connectWallet' | 'disconnectWallet' | 'disconnectAll' | 'completeWalletLogin'>}
+ * @throws {Error} If called outside an AuthProvider.
+ */
+export function useAuthActions() {
+    const context = useContext(AuthActionsContext);
+    if (context === null) throw new Error("useAuthActions must be used within an AuthProvider");
+    return context;
+}
+
+/**
+ * Returns the live wallet session snapshot without subscribing to discovery
+ * catalog updates.
+ *
+ * @returns {Pick<AuthContextValue, 'wallet' | 'walletType' | 'lastWallet' | 'isConnecting'>}
+ * @throws {Error} If called outside an AuthProvider.
+ */
+export function useAuthWalletState() {
+    const context = useContext(AuthWalletStateContext);
+    if (context === null) throw new Error("useAuthWalletState must be used within an AuthProvider");
+    return context;
+}
+
+/**
+ * Returns the installed/discovered wallet catalog without subscribing to auth
+ * identity or wallet session mutations.
+ *
+ * @returns {Pick<AuthContextValue, 'installed' | 'availableWallets'>}
+ * @throws {Error} If called outside an AuthProvider.
+ */
+export function useAuthWalletCatalog() {
+    const context = useContext(AuthWalletCatalogContext);
+    if (context === null) throw new Error("useAuthWalletCatalog must be used within an AuthProvider");
     return context;
 }

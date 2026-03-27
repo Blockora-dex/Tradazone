@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, act, render } from '@testing-library/react';
-import { AuthProvider, useAuth, useAuthUser } from '../context/AuthContext';
+import { renderHook, act } from '@testing-library/react';
+import {
+  AuthProvider,
+  useAuth,
+  useAuthActions,
+  useAuthUser,
+  useAuthWalletCatalog,
+} from '../context/AuthContext';
 import { STORAGE_PREFIX } from '../config/env';
 
 // Keys must match what AuthContext derives from STORAGE_PREFIX
@@ -163,50 +169,69 @@ describe('useAuth', () => {
 });
 
 describe('useAuthUser', () => {
-  it('does not re-render for wallet-only updates', () => {
-    let authApi;
-    let userRenderCount = 0;
+  it('keeps the same user reference for wallet-only updates', () => {
+    const { result } = renderHook(() => ({
+      auth: useAuth(),
+      user: useAuthUser(),
+    }), { wrapper });
 
-    function AuthControls() {
-      authApi = useAuth();
-      return null;
-    }
-
-    function UserConsumer() {
-      useAuthUser();
-      userRenderCount += 1;
-      return null;
-    }
-
-    render(
-      <AuthProvider>
-        <AuthControls />
-        <UserConsumer />
-      </AuthProvider>
-    );
-
-    expect(userRenderCount).toBe(1);
+    const initialUser = result.current.user;
 
     act(() => {
-      authApi.setWallet((current) => ({
+      result.current.auth.setWallet((current) => ({
         ...current,
         balance: String(Number(current.balance || '0') + 1),
       }));
     });
 
-    expect(userRenderCount).toBe(1);
+    expect(result.current.user).toBe(initialUser);
 
     act(() => {
-      authApi.login({ id: '99', name: 'Profile User', email: 'profile@example.com' });
+      result.current.auth.login({ id: '99', name: 'Profile User', email: 'profile@example.com' });
     });
 
-    expect(userRenderCount).toBe(2);
+    expect(result.current.user).not.toBe(initialUser);
   });
 
   it('throws when used outside AuthProvider', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => renderHook(() => useAuthUser())).toThrow('useAuthUser must be used within an AuthProvider');
     spy.mockRestore();
+  });
+});
+
+describe('narrow auth selectors', () => {
+  it('useAuthActions keeps a stable reference across wallet state updates', () => {
+    const { result } = renderHook(() => ({
+      auth: useAuth(),
+      actions: useAuthActions(),
+    }), { wrapper });
+
+    const initialActions = result.current.actions;
+
+    act(() => {
+      result.current.auth.setWallet((current) => ({
+        ...current,
+        balance: String(Number(current.balance || '0') + 1),
+      }));
+    });
+
+    expect(result.current.actions).toBe(initialActions);
+  });
+
+  it('useAuthWalletCatalog keeps a stable reference across auth identity updates', () => {
+    const { result } = renderHook(() => ({
+      auth: useAuth(),
+      catalog: useAuthWalletCatalog(),
+    }), { wrapper });
+
+    const initialCatalog = result.current.catalog;
+
+    act(() => {
+      result.current.auth.login({ id: '55', name: 'Catalog Safe', email: 'catalog@example.com' });
+    });
+
+    expect(result.current.catalog).toBe(initialCatalog);
   });
 });
 

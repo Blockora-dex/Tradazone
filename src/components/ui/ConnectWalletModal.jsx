@@ -30,7 +30,11 @@ import { useState, useEffect } from 'react';
 import { X, ExternalLink, AlertCircle, ChevronLeft } from 'lucide-react';
 import Logo from './Logo';
 import { useLobstr } from '../../hooks/useLobstr';
-import { useAuth } from '../../context/AuthContext';
+import {
+    useAuthActions,
+    useAuthWalletCatalog,
+    useAuthWalletState,
+} from '../../context/AuthContext';
 import { useVirtualList } from '../../hooks/useVirtualList';
 
 // ISSUE #70: Virtualization constants for the wallet list.
@@ -150,13 +154,9 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
      */
     const [view, setView] = useState('primary');
 
-    const {
-        completeWalletLogin,
-        wallet,
-        disconnectAll,
-        installed,
-        availableWallets
-    } = useAuth();
+    const { completeWalletLogin, disconnectAll } = useAuthActions();
+    const { wallet } = useAuthWalletState();
+    const { installed, availableWallets } = useAuthWalletCatalog();
 
     const lobstrHook = useLobstr();
 
