@@ -52,6 +52,9 @@ export default defineConfig(({ mode }) => {
       environment: 'happy-dom',
       globals: true,
       setupFiles: './src/test/setup.js',
+      snapshotFormat: {
+        printBasicPrototype: false,
+      },
     },
   }
 })
