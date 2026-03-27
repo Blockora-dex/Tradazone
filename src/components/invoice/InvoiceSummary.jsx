@@ -1,4 +1,13 @@
-function InvoiceSummary({ subtotal = 0, tax = 0, total = 0, currency = 'STRK' }) {
+import { memo } from 'react';
+
+/**
+ * InvoiceSummary — displays invoice totals (subtotal, tax, total).
+ * 
+ * ISSUE #73 FIX: Wrapped with React.memo to prevent N+1 redundant renders.
+ * This component only needs to re-render when subtotal, tax, total, or currency
+ * props change, not on every parent state update.
+ */
+const InvoiceSummary = memo(function InvoiceSummary({ subtotal = 0, tax = 0, total = 0, currency = 'STRK' }) {
     return (
         <div className="flex justify-end mb-10">
             <div className="w-64">
@@ -31,6 +40,6 @@ function InvoiceSummary({ subtotal = 0, tax = 0, total = 0, currency = 'STRK' })
             </div>
         </div>
     );
-}
+});
 
 export default InvoiceSummary;

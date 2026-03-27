@@ -1,11 +1,18 @@
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import InvoiceHeader from './InvoiceHeader';
 import InvoiceTable from './InvoiceTable';
 import InvoiceSummary from './InvoiceSummary';
 import InvoiceFooter from './InvoiceFooter';
 import { formatUtcDate } from '../../utils/date';
 
-const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sender }, ref) {
+/**
+ * InvoiceLayout — PDF-ready invoice layout component.
+ * 
+ * ISSUE #73 FIX: Wrapped with React.memo to prevent N+1 redundant renders.
+ * This component is used for PDF generation and should only re-render when
+ * invoice, customer, or sender props change.
+ */
+const InvoiceLayout = memo(forwardRef(function InvoiceLayout({ invoice, customer, sender }, ref) {
     const subtotal = invoice.items.reduce(
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
         0
@@ -78,6 +85,6 @@ const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sen
             </div>
         </div>
     );
-});
+}));
 
 export default InvoiceLayout;
