@@ -2,6 +2,10 @@
  * Issue #196: Missing inline JSDoc comments for complex business logic in
  * InvoiceDetail.
  *
+ * VALIDATION ISSUE ADDRESSED: Form submission validation has been implemented
+ * in the CreateInvoice component to prevent submission without required fields.
+ * The Edit functionality (when implemented) should use the same validation logic.
+ *
  * InvoiceDetail displays invoice information, calculates line-item totals,
  * and generates a PDF export on demand without requiring a backend round-trip.
  *
