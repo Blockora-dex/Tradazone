@@ -52,7 +52,7 @@
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
-    "starknet": "^9.2.1"
+    "starknet": "^9.4.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
