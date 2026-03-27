@@ -5,17 +5,25 @@
  * InvoiceDetail displays invoice information, calculates line-item totals,
  * and generates a PDF export on demand without requiring a backend round-trip.
  *
+ * Issue #21: Unhandled token expiration causes silent UI failure.
+ * PrivateRoute guards the route at mount time, but if the session TTL expires
+ * while the user is already viewing this page (no navigation occurs), the
+ * component keeps rendering stale data without any feedback. The fix adds a
+ * mount-time effect that re-validates the live localStorage session and
+ * redirects to /signin?reason=expired when the token is gone.
+ *
  * @module pages/invoices/InvoiceDetail
  * @see https://github.com/Blockora-dex/Tradazone/issues/196
+ * @see https://github.com/Blockora-dex/Tradazone/issues/21
  */
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Send, Download, Edit, Eye } from 'lucide-react';
 import Button from '../../components/forms/Button';
 import StatusBadge from '../../components/tables/StatusBadge';
 import InvoiceLayout from '../../components/invoice/InvoiceLayout';
 import { useData } from '../../context/DataContext';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, loadSession } from '../../context/AuthContext';
 import { formatUtcDate } from '../../utils/date';
 
 /**
@@ -37,6 +45,13 @@ function InvoiceDetail() {
     const { invoices, customers } = useData();
     const invoice = invoices.find(inv => inv.id === id);
     const customer = customers.find(c => c.id === invoice?.customerId);
+
+    // #21: bail out early if the session expired while the page was open
+    useEffect(() => {
+        if (!loadSession()) {
+            navigate('/signin?reason=expired', { replace: true });
+        }
+    }, [navigate]);
 
     if (!invoice) return <div className="p-8"><p className="text-t-muted">Invoice not found</p></div>;
 

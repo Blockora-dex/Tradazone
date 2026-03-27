@@ -37,7 +37,7 @@
 
 /* eslint-disable react-refresh/only-export-components -- provider, hooks, and session helpers are intentionally co-exported */
 
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { STORAGE_PREFIX, SESSION_TTL_MS, ALLOW_MOCK_WALLET } from '../config/env';
 import { useDiscoveredProviders } from '../utils/wallet-discovery';
 

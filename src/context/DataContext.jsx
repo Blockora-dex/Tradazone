@@ -20,7 +20,7 @@
  *   - pnpm build:size  : Build and check sizes
  */
 
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { dispatchWebhook, setWebhookUrl, getWebhookUrl } from '../services/webhook';
 import { toUtcMidnightIso } from '../utils/date';
 
