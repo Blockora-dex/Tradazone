@@ -5,29 +5,76 @@
   "homepage": "https://Blockora-dex.github.io/Tradazone",
   "type": "module",
   "size-limit": [
-     {
-      "path": "dist/assets/*.js",
-      "limit": "550 kB",
-      "gzip": true
-    },
     {
+      "name": "Core Bundle (index)",
       "path": "dist/assets/index-*.js",
       "limit": "500 kB",
       "gzip": true
     },
     {
+      "name": "Auth Context",
+      "path": "dist/assets/auth-context-*.js",
+      "limit": "10 kB",
+      "gzip": true
+    },
+    {
+      "name": "Data Context (Issue #180)",
+      "path": "dist/assets/data-context-*.js",
+      "limit": "10 kB",
+      "gzip": true
+    },
+    {
+      "name": "SignIn (Issue #174)",
+      "path": "dist/assets/sign-in-*.js",
+      "limit": "20 kB",
+      "gzip": true
+    },
+    {
+      "name": "CustomerList (Issue #179)",
+      "path": "dist/assets/customer-list-*.js",
+      "limit": "50 kB",
+      "gzip": true
+    },
+    {
+      "name": "InvoiceDetail (Issue #165)",
+      "path": "dist/assets/invoice-detail-*.js",
+      "limit": "50 kB",
+      "gzip": true
+    },
+    {
+      "name": "ConnectWalletModal (Issue #161)",
+      "path": "dist/assets/connect-wallet-*.js",
+      "limit": "20 kB",
+      "gzip": true
+    },
+    {
+      "name": "Wallet Libraries (Ethers/Starknet)",
       "path": "dist/assets/wallet-*.js",
       "limit": "500 kB",
       "gzip": true
     },
     {
-      "path": "dist/assets/html2pdf-*.js",
-      "limit": "1 MB",
+      "name": "UI Icons (Lucide)",
+      "path": "dist/assets/ui-icons-*.js",
+      "limit": "100 kB",
       "gzip": true
     },
     {
-      "path": "dist/assets/data-context*.js",
-      "limit": "50 kB",
+      "name": "Chart Libraries",
+      "path": "dist/assets/charts-*.js",
+      "limit": "200 kB",
+      "gzip": true
+    },
+    {
+      "name": "Document Export (html2pdf)",
+      "path": "dist/assets/document-export-*.js",
+      "limit": "600 kB",
+      "gzip": true
+    },
+    {
+      "name": "Core Libraries",
+      "path": "dist/assets/core-libs-*.js",
+      "limit": "150 kB",
       "gzip": true
     }
   ],

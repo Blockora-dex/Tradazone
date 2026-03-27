@@ -6,9 +6,13 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   size-check:
-    name: Check bundle size limits
+    name: Check bundle size limits (Issue #162)
     runs-on: ubuntu-latest
 
     steps:
@@ -28,30 +32,43 @@ jobs:
         run: npm run build
 
       - name: Run size-limit check
-        run: npm run size
-        continue-on-error: true
-
-      - name: Analyze bundle sizes
+        id: size_limit
         run: |
-          echo "📦 Bundle Size Report"
-          echo "====================="
-
-          # Find and display chunk sizes
-          if [ -d "dist/assets" ]; then
-            echo ""
-            echo "Individual chunk sizes:"
-            ls -lh dist/assets/*.js 2>/dev/null | awk '{print $5, $9}' || echo "No JS chunks found"
-            
-            # Check DataContext chunk specifically
-            echo ""
-            echo "DataContext chunk:"
-            ls -lh dist/assets/*data-context*.js 2>/dev/null || echo "No data-context chunk found"
-          fi
-
-          # Check total dist size
-          echo ""
-          echo "Total dist size:"
-          du -sh dist/ 2>/dev/null || echo "No dist folder"
+          echo "## 📦 Bundle Size Report (Issue #162)" > bundle-report.md
+          echo "" >> bundle-report.md
+          echo "Checking bundle sizes against defined limits..." >> bundle-report.md
+          echo "" >> bundle-report.md
+          
+          # Run size-limit and capture output for the report
+          npm run size -- --json > size-report.json || true
+          
+          echo "### Individual Chunk Sizes" >> bundle-report.md
+          echo "| Chunk Name | Size (gzip) | Limit | Status |" >> bundle-report.md
+          echo "| :--- | :--- | :--- | :--- |" >> bundle-report.md
+          
+          # Parse JSON output to create a markdown table (requires jq)
+          # We use a simple fallback if jq is not available or JSON is malformed
+          cat size-report.json | node -e '
+            const fs = require("fs");
+            try {
+              const data = JSON.parse(fs.readFileSync(0, "utf-8"));
+              data.forEach(item => {
+                const status = item.passed ? "✅" : "❌";
+                console.log(`| ${item.name || item.path} | ${(item.size/1024).toFixed(2)} KB | ${(item.limit/1024).toFixed(2)} KB | ${status} |`);
+              });
+            } catch (e) {
+              console.log("| Error | Failed to parse size-limit output | - | - |");
+            }
+          ' >> bundle-report.md
+          
+          echo "" >> bundle-report.md
+          echo "Total build directory size: $(du -sh dist/ | cut -f1)" >> bundle-report.md
+          
+          # Output to console
+          cat bundle-report.md
+          
+          # Now run it for real to fail the job if needed
+          npm run size
         shell: bash
 
       - name: Upload bundle report
@@ -59,17 +76,21 @@ jobs:
         if: always()
         with:
           name: bundle-report
-          path: dist/
+          path: |
+            dist/
+            bundle-report.md
+            size-report.json
 
-      - name: Check size-limit result
-        run: |
-          # Check if size-limit reported any errors
-          RESULT=$(npm run size -- --json 2>&1 || true)
-          if echo "$RESULT" | grep -q "Error"; then
-            echo "❌ Bundle size limits exceeded!"
-            echo "$RESULT"
-            exit 1
-          fi
-          echo "✅ Bundle size check passed"
-          echo "$RESULT"
-        shell: bash
+      - name: Report failing sizes to PR
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('bundle-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "🚨 **Bundle size limits exceeded!**\n\n" + report
+            })

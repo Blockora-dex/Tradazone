@@ -2,7 +2,7 @@
  * @fileoverview AuthContext — application-wide authentication and wallet state.
  * eslint-disable react-refresh/only-export-components
  *
- * ISSUE: #151 (Build size limits for AuthContext)
+ * ISSUE: #171 (Build size limits for AuthContext)
  * Category: DevOps & Infrastructure
  * Affected Area: AuthContext
  * Description: Implement production build size limits and monitoring for AuthContext.

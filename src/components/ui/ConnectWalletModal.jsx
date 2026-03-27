@@ -4,7 +4,7 @@
  * Onboarding for contributors: see CONTRIBUTING.md → "ConnectWalletModal onboarding"
  * (GitHub Issue #203).
  *
- * ISSUE: #150 (Build size limits for ConnectWalletModal)
+ * ISSUE: #161 (Build size limits for ConnectWalletModal)
  * Category: DevOps & Infrastructure
  * Affected Area: ConnectWalletModal
  * Description: Implement production build size limits and monitoring for ConnectWalletModal.

@@ -1,7 +1,7 @@
 /**
  * @fileoverview CustomerList — customer management page.
  *
- * ISSUE: #183 (Build size limits for CustomerList)
+ * ISSUE: #179 (Build size limits for CustomerList)
  * Category: DevOps & Infrastructure
  * Affected Area: CustomerList
  * Description: Implement production build size limits and monitoring for CustomerList.

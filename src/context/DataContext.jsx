@@ -1,12 +1,12 @@
 /**
  * DataContext.jsx
  *
- * ISSUE: #184 (Build size limits and monitoring for DataContext)
+ * ISSUE: #180 (Build size limits and monitoring for DataContext)
  * Category: DevOps & Infrastructure
  * Affected Area: DataContext
  * Description: Implements production build size limits and monitoring for DataContext.
  *   - DataContext is isolated into its own chunk (data-context) for size tracking
- *   - Build size budget: max 50KB for DataContext chunk (gzip: true)
+ *   - Build size budget: defined in package.json and vite.config.js
  *   - CI pipeline includes bundle size check that fails if limits exceeded
  *
  * Size Limits:

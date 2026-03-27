@@ -1,3 +1,13 @@
+/**
+ * @fileoverview SignIn — landing page and wallet connection entry point.
+ *
+ * ISSUE: #174 (Build size limits and monitoring for SignIn)
+ * Category: DevOps & Infrastructure
+ * Affected Area: SignIn
+ * Description: Implement production build size limits and monitoring for SignIn.
+ * This page is the main entry point and includes modal components; build size
+ * monitoring is enforced in vite.config.js and CI to prevent bundle bloat.
+ */
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
