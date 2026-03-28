@@ -36,7 +36,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Run unit tests with coverage
+      # Issue #155: Integration tests for Context mutations run as part of the
+      # standard test suite (ContextMutations.integration.test.jsx). No separate
+      # step is needed — vitest picks them up automatically via the glob pattern.
+      - name: Run unit and integration tests with coverage
         run: npm run test:coverage
 
   deploy:
