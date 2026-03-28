@@ -10,6 +10,7 @@ function AddCustomer() {
     const { addCustomer } = useData();
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', address: '' });
     const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const validate = () => {
         const newErrors = {};
@@ -26,13 +27,26 @@ function AddCustomer() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        // Guard: prevent duplicate submissions
+        if (isSubmitting) {
+            console.warn('[AddCustomer] Duplicate submission attempt blocked');
+            return;
+        }
+        
         const validationErrors = validate();
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
             return;
         }
-        addCustomer(formData);
-        navigate('/customers');
+        
+        setIsSubmitting(true);
+        try {
+            addCustomer(formData);
+            navigate('/customers');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleChange = (field) => (e) => {
@@ -85,8 +99,10 @@ function AddCustomer() {
                     />
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                    <Button variant="secondary" onClick={() => navigate('/customers')}>Cancel</Button>
-                    <Button type="submit" variant="primary">Add Customer</Button>
+                    <Button variant="secondary" onClick={() => navigate('/customers')} disabled={isSubmitting}>Cancel</Button>
+                    <Button type="submit" variant="primary" disabled={isSubmitting}>
+                        {isSubmitting ? 'Adding...' : 'Add Customer'}
+                    </Button>
                 </div>
             </form>
         </div>
