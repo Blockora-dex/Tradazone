@@ -80,6 +80,7 @@ export function DataProvider({ children }) {
         email: data.email,
         phone: data.phone || '',
         address: data.address || '',
+        description: data.description || '',
         totalSpent: '0',
         currency: 'STRK',
         invoiceCount: 0,
@@ -94,6 +95,16 @@ export function DataProvider({ children }) {
     } finally {
       pendingOperations.current.customers.delete(operationId);
     }
+  }, []);
+
+  const updateCustomerDescription = useCallback((customerId, description) => {
+    setCustomers((prev) => {
+      const next = prev.map((customer) =>
+        customer.id === customerId ? { ...customer, description } : customer,
+      );
+      save(KEYS.customers, next);
+      return next;
+    });
   }, []);
 
   const addItem = useCallback((data) => {
@@ -279,8 +290,21 @@ export function DataProvider({ children }) {
       addInvoice,
       addCheckout,
       markCheckoutPaid,
+      updateCustomerDescription,
     }),
-    [customers, invoices, checkouts, items, addCustomer, addItem, deleteItems, addInvoice, addCheckout, markCheckoutPaid],
+    [
+      customers,
+      invoices,
+      checkouts,
+      items,
+      addCustomer,
+      addItem,
+      deleteItems,
+      addInvoice,
+      addCheckout,
+      markCheckoutPaid,
+      updateCustomerDescription,
+    ],
   );
 
   const checkoutContextValue = useMemo(
