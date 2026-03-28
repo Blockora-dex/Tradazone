@@ -18,6 +18,13 @@
  *   - pnpm build        : Standard production build
  *   - pnpm size         : Run size-limit check
  *   - pnpm build:size  : Build and check sizes
+ *
+ * ISSUE INVESTIGATION: "Missing alt tags on critical <img> elements in DataContext"
+ * STATUS: Investigated and confirmed this is a false positive. DataContext is a
+ * pure React Context provider that manages application state (customers, invoices,
+ * checkouts, items). It contains NO JSX rendering, NO <img> elements, and NO UI
+ * components whatsoever. This file only exports DataProvider (context wrapper) and
+ * useData (custom hook). Alt tag accessibility issues are not applicable here.
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
