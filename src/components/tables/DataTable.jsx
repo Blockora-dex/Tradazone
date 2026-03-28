@@ -9,10 +9,15 @@
 import { useCallback, useMemo } from "react";
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import {
-  FILTER_CONFIGS,
-  useDataFilters,
-  useFilteredData,
-} from "../../context/DataContext";
+  ChevronDown,
+  ChevronUp,
+  Search,
+  Filter,
+  Calendar,
+  DollarSign,
+  X,
+} from "lucide-react";
+import { useDataFilters, useFilteredData, FILTER_CONFIGS } from "../../context/DataContext";
 import { useVirtualList } from "../../hooks/useVirtualList";
 
 const FILTER_ROW_HEIGHT = 60;
@@ -120,210 +125,82 @@ function DataTable({
   );
 
   const clearSearch = useCallback(() => {
-    updateFilters({ search: "" });
-  }, [updateFilters]);
+    setFilters({ ...filters, search: "" });
+  }, [filters, setFilters]);
 
-  const handleSelectAll = useCallback(
-    (event) => {
-      if (event.target.checked) {
-        onSelectionChange(filteredData.map((item) => item.id));
-      } else {
-        onSelectionChange([]);
-      }
-    },
-    [filteredData, onSelectionChange],
-  );
+  const isSorted = (field) => filters.sort.field === field;
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      onSelectionChange(rawData.map((item) => item.id));
+    } else {
+      onSelectionChange([]);
+    }
+  };
+
+  const handleSelectItem = (e, id) => {
+    e.stopPropagation();
+    if (e.target.checked) {
+      onSelectionChange([...selectedItems, id]);
+    } else {
+      onSelectionChange(selectedItems.filter((itemId) => itemId !== id));
+    }
+  };
+
+  const isAllSelected = rawData.length > 0 && selectedItems.length === rawData.length;
 
   const handleSelectItem = useCallback(
     (event, id) => {
       event.stopPropagation();
 
-      if (event.target.checked) {
-        onSelectionChange([...selectedItems, id]);
-      } else {
-        onSelectionChange(selectedItems.filter((itemId) => itemId !== id));
-      }
-    },
-    [onSelectionChange, selectedItems],
-  );
+  // Always call the hook (React rules prohibit conditional hook calls)
+  const { scrollRef, virtualItems, topPadding, bottomPadding } = useVirtualList({
+    items: filteredData,
+    itemHeight: ROW_HEIGHT,
+  });
 
-  const isSorted = useCallback(
-    (field) => enableFilters && filters.sort.field === field,
-    [enableFilters, filters.sort.field],
-  );
+  const rowsToRender = shouldVirtualize
+    ? virtualItems.map((v) => ({ ...v.item, _virtualIndex: v.index }))
+    : filteredData.map((item, index) => ({ ...item, _virtualIndex: index }));
 
   return (
-    <div className={`bg-white border border-border rounded-card overflow-hidden ${className}`}>
+    <div
+      className={`bg-white border border-border rounded-card overflow-hidden dark:bg-zinc-950 dark:border-zinc-800 transition-colors ${className}`}
+    >
+      {/* Horizontal scroll wrapper for mobile */}
       <div
         ref={shouldVirtualize ? scrollRef : undefined}
         className="overflow-x-auto -webkit-overflow-scrolling-touch"
         style={shouldVirtualize ? { maxHeight: "600px", overflowY: "auto" } : undefined}
       >
         <table className="w-full border-collapse min-w-[600px]">
-          {showFilters && (
-            <thead className="sticky top-0 z-20 bg-white">
-              <tr style={{ height: FILTER_ROW_HEIGHT }}>
-                {selectable && <th className="w-10 px-4 py-3 bg-page whitespace-nowrap" />}
-                <th colSpan={columns.length} className="px-4 py-3 bg-page">
-                  <div className="flex flex-wrap items-center gap-3">
-                    {config.searchableFields?.length > 0 && (
-                      <div className="relative flex-1 min-w-[220px]">
-                        <Search
-                          size={16}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-t-muted"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Search..."
-                          className="w-full pl-10 pr-8 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
-                          value={filters.search}
-                          onChange={(event) => updateFilters({ search: event.target.value })}
-                        />
-                        {filters.search && (
-                          <button
-                            type="button"
-                            onClick={clearSearch}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-                            aria-label="Clear search"
-                          >
-                            <X size={16} className="text-t-muted" />
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {config.statusField && (
-                      <select
-                        value={filters.status}
-                        onChange={(event) => updateFilters({ status: event.target.value })}
-                        className="px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand"
-                      >
-                        <option value="all">All Status</option>
-                        {statusOptions.map((status) => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-
-                    {config.dateFields && (
-                      <>
-                        <input
-                          type="date"
-                          value={filters.dateFrom}
-                          onChange={(event) => updateFilters({ dateFrom: event.target.value })}
-                          className="px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand"
-                          aria-label="Filter from date"
-                        />
-                        <input
-                          type="date"
-                          value={filters.dateTo}
-                          onChange={(event) => updateFilters({ dateTo: event.target.value })}
-                          className="px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand"
-                          aria-label="Filter to date"
-                        />
-                      </>
-                    )}
-
-                    {config.amountField && (
-                      <>
-                        <input
-                          type="number"
-                          min="0"
-                          placeholder="Min amount"
-                          value={filters.amountMin}
-                          onChange={(event) => updateFilters({ amountMin: event.target.value })}
-                          className="w-32 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand"
-                          aria-label="Minimum amount"
-                        />
-                        <input
-                          type="number"
-                          min="0"
-                          placeholder="Max amount"
-                          value={filters.amountMax}
-                          onChange={(event) => updateFilters({ amountMax: event.target.value })}
-                          className="w-32 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand"
-                          aria-label="Maximum amount"
-                        />
-                      </>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={resetFilters}
-                      className="px-4 py-2 text-sm font-medium text-t-muted hover:text-t-primary transition-colors"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-          )}
-
-          <thead
-            className={enableFilters ? "sticky z-10 bg-white border-t border-border" : undefined}
-            style={enableFilters ? { top: showFilters ? FILTER_ROW_HEIGHT : 0 } : undefined}
-          >
-            <tr className="border-b border-border">
+          <thead className="sticky top-0 z-10">
+            {/* Header Row: Added dark border and text color */}
+            <tr className="border-b border-border dark:border-zinc-800">
               {selectable && (
-                <th className="w-10 px-4 py-3 bg-page whitespace-nowrap">
+                <th className="w-10 px-4 py-3 bg-page dark:bg-zinc-900 whitespace-nowrap">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                    className="h-4 w-4 rounded border-border dark:border-zinc-700 bg-transparent text-brand focus:ring-brand"
                     checked={isAllSelected}
                     onChange={handleSelectAll}
                   />
                 </th>
               )}
-
-              {columns.map((column) => {
-                const sortable = enableFilters && column.sortable !== false;
-                const headerClasses = [
-                  "text-left px-4 py-3 text-xs font-semibold text-t-muted uppercase tracking-wide bg-page whitespace-nowrap",
-                  sortable ? "cursor-pointer hover:bg-gray-50 transition-colors" : "",
-                  isSorted(column.key) ? "font-bold text-t-primary" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ");
-
-                return (
-                  <th
-                    key={column.key}
-                    style={{ width: column.width }}
-                    className={headerClasses}
-                    onClick={sortable ? () => toggleSort(column.key) : undefined}
-                  >
-                    {sortable ? (
-                      <div className="flex items-center gap-1">
-                        {column.header}
-                        {isSorted(column.key) ? (
-                          filters.sort.dir === "asc" ? (
-                            <ChevronUp size={14} className="text-brand" />
-                          ) : (
-                            <ChevronDown size={14} className="text-brand" />
-                          )
-                        ) : (
-                          <ChevronDown size={14} className="text-t-muted opacity-50" />
-                        )}
-                      </div>
-                    ) : (
-                      column.header
-                    )}
-                  </th>
-                );
-              })}
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  style={{ width: col.width }}
+                  className="text-left px-4 py-3 text-xs font-semibold text-t-muted dark:text-zinc-500 uppercase tracking-wide bg-page dark:bg-zinc-900 whitespace-nowrap"
+                >
+                  {col.header}
+                </th>
+              ))}
             </tr>
           </thead>
-
           <tbody>
             {shouldVirtualize && topPadding > 0 && (
               <tr aria-hidden="true">
-                <td
-                  colSpan={columns.length + (selectable ? 1 : 0)}
-                  style={{ height: topPadding }}
-                />
+                <td colSpan={columns.length + (selectable ? 1 : 0)} style={{ height: topPadding }} />
               </tr>
             )}
 
@@ -331,36 +208,36 @@ function DataTable({
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="text-center py-10 text-t-muted"
+                  className="text-center py-10 text-t-muted dark:text-zinc-600"
                 >
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               rowsToRender.map((row) => (
-                // Keep default markup stable for legacy snapshot coverage when
-                // filter/sort mode is not enabled.
                 <tr
                   key={row.id || row._virtualIndex}
                   onClick={() => onRowClick?.(row)}
-                  className={`border-b border-border last:border-b-0 ${
-                    onRowClick ? "cursor-pointer hover:bg-page active:bg-brand-bg" : ""
-                  }${selectedItems.includes(row.id) ? " bg-brand-bg" : ""}`}
+                  /* Rows: Added dark mode text, border, and hover state */
+                  className={`border-b border-border dark:border-zinc-800 last:border-b-0 transition-colors ${
+                    onRowClick
+                      ? "cursor-pointer hover:bg-page dark:hover:bg-zinc-900 active:bg-brand-bg dark:active:bg-brand/10"
+                      : ""
+                  } ${selectedItems.includes(row.id) ? "bg-brand-bg dark:bg-brand/10" : ""}`}
                 >
                   {selectable && (
-                    <td className="w-10 px-4 py-3" onClick={(event) => event.stopPropagation()}>
+                    <td className="w-10 px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                        className="h-4 w-4 rounded border-border dark:border-zinc-700 bg-transparent text-brand focus:ring-brand"
                         checked={selectedItems.includes(row.id)}
-                        onChange={(event) => handleSelectItem(event, row.id)}
+                        onChange={(e) => handleSelectItem(e, row.id)}
                       />
                     </td>
                   )}
-
-                  {columns.map((column) => (
-                    <td key={column.key} className="px-4 py-3 text-sm text-t-primary min-h-[44px]">
-                      {column.render ? column.render(row[column.key], row) : row[column.key]}
+                  {columns.map((col) => (
+                    <td key={col.key} className="px-4 py-3 text-sm text-t-primary dark:text-zinc-300 min-h-[44px]">
+                      {col.render ? col.render(row[col.key], row) : row[col.key]}
                     </td>
                   ))}
                 </tr>
@@ -369,10 +246,7 @@ function DataTable({
 
             {shouldVirtualize && bottomPadding > 0 && (
               <tr aria-hidden="true">
-                <td
-                  colSpan={columns.length + (selectable ? 1 : 0)}
-                  style={{ height: bottomPadding }}
-                />
+                <td colSpan={columns.length + (selectable ? 1 : 0)} style={{ height: bottomPadding }} />
               </tr>
             )}
           </tbody>

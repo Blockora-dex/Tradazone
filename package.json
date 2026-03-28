@@ -86,7 +86,7 @@
     "chart.js": "^4.5.1",
     "ethers": "^6.16.0",
     "get-starknet": "^4.0.0",
-    "html2pdf.js": "^0.14.0",
+    "html2pdf.js": "0.14.0",
     "lucide-react": "^1.7.0",
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
