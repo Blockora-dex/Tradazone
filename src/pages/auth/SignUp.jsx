@@ -32,6 +32,19 @@
  * Accessibility Impact:
  * - Improves compatibility with screen readers (e.g., NVDA, JAWS).
  * - Aligns with WCAG 2.1 guidelines for non-text content.
+ *
+ * ISSUE #47 (WCAG AA Color Contrast Fix)
+ * Category: UI/UX (Accessibility)
+ * Priority: Low
+ * Affected Area: AuthContext / SignUp
+ * Description: Text colors in SignUp page panels did not meet WCAG AA contrast ratio standards.
+ *
+ * Fix:
+ * - Updated text color classes to ensure sufficient contrast:
+ *    - Headline (`h1`) → `text-t-primary-dark` (improved contrast)
+ *    - Paragraphs (`p`) → `text-t-muted-dark`
+ *    - Buttons → maintained white text on brand color (`bg-brand text-white`) with hover opacity.
+ * - Verified color contrast using WCAG AA guidelines (4.5:1 for normal text, 3:1 for large text).
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -134,13 +147,14 @@ function SignUp() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-xl lg:text-3xl font-bold text-t-primary mb-3 leading-snug">
+          <h1 className="text-xl lg:text-3xl font-bold text-t-primary-dark mb-3 leading-snug">
             Manage clients, send invoices, and accept payments directly into your preferred wallet
           </h1>
 
-          <p className="text-sm text-t-muted mb-8 lg:mb-10">
+          <p className="text-sm text-t-muted-dark mb-8 lg:mb-10">
             Connect your wallet to get started
           </p>
+
           <button
             onClick={() => setIsModalOpen(true)}
             aria-label="Connect your wallet to sign up"

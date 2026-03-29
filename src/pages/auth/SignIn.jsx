@@ -1,7 +1,7 @@
 /**
  * @fileoverview SignIn — landing page and wallet connection entry point.
  *
- * ISSUE: #121 (Rich text descriptions in SignIn)
+ * ISSUE #121: Rich text descriptions in SignIn
  * Category: Feature Enhancement
  * Priority: Critical
  * Affected Area: SignIn
@@ -13,33 +13,17 @@
  * keeps an unauthenticated draft in localStorage, and syncs the draft into the
  * auth session after a successful wallet connection.
  *
- * ISSUE: #174 (Build size limits and monitoring for SignIn)
+ * ISSUE #174: Build size limits and monitoring for SignIn
  * Category: DevOps & Infrastructure
  * Affected Area: SignIn
  * Description: Implement production build size limits and monitoring for SignIn.
  * This page is the main entry point and includes modal components; build size
  * monitoring is enforced in vite.config.js and CI to prevent bundle bloat.
  *
- * ISSUE: Implement 'Export to CSV' button on Auth module
- * Category: Feature Enhancement | Priority: Critical | Status: RESOLVED ✓
- * Affected Files: SignIn.jsx, SignUp.jsx
- * Description: Added CSV export buttons exporting wallet address + auth status.
- * CSV Format: "Wallet Address,Status\n<address>,<status>"
- * Download: Client-side data URI (no server deps).
- * Testing: Manual verification - no regressions.
- *
- * ISSUE #69: Excessive context API updates caused full SignIn re-renders whenever the
- * monolithic `user` object changed (e.g. profile fields) even when login state did not.
- * Category: Performance & Scalability
- * Resolution: Use {@link useAuthIsAuthenticated} for redirect + CSV (boolean-only context).
- * One-time description draft hydration uses {@link loadSession} instead of subscribing to
- * the full user snapshot via {@link useAuthUser}.
- *
- * ISSUE #56 (Missing alt tags on critical elements in Auth module - SignIn)
+ * ISSUE #56: Missing alt tags on critical elements in Auth module - SignIn
  * Category: UI/UX (Accessibility)
  * Priority: Low
- * Description:
- * Critical visual elements lacked meaningful alternative text, reducing usability
+ * Description: Critical visual elements lacked meaningful alternative text, reducing usability
  * for screen reader users and failing WCAG accessibility standards.
  *
  * Fix:
@@ -48,9 +32,15 @@
  * - Added aria-label to primary CTA for improved assistive navigation.
  * - Decorative elements remain hidden where appropriate.
  *
- * Accessibility Impact:
- * - Improves compatibility with screen readers (NVDA, JAWS).
- * - Aligns with WCAG 2.1 guidelines for non-text content.
+ * ISSUE #47: WCAG AA Color Contrast Fix (AuthContext / SignIn)
+ * Category: UI/UX (Accessibility)
+ * Priority: Low
+ * Description: Text colors in SignIn did not meet WCAG AA contrast ratio standards.
+ *
+ * Fix:
+ * - Headline (`h1`) → `text-t-primary-dark` (improved contrast ratio)
+ * - Paragraphs (`p`) → `text-t-muted-dark`
+ * - Verified contrast using WCAG AA guidelines (4.5:1 for normal text, 3:1 for large text)
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -140,12 +130,12 @@ function SignIn() {
           )}
 
           {/* Headline */}
-          <h1 className="text-xl lg:text-3xl font-bold text-t-primary mb-3 leading-snug">
+          <h1 className="text-xl lg:text-3xl font-bold text-t-primary-dark mb-3 leading-snug">
             Manage clients, send invoices, and accept payments directly into
             your preferred wallet
           </h1>
 
-          <p className="text-sm text-t-muted mb-8 lg:mb-10">
+          <p className="text-sm text-t-muted-dark mb-8 lg:mb-10">
             Connect your wallet to get started
           </p>
 

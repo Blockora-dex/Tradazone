@@ -1,3 +1,22 @@
+/**
+ * @fileoverview Onboarding — Walkthrough for new users to get started with Tradazone.
+ *
+ * ISSUE #47: WCAG AA Color Contrast Fix
+ * Category: UI/UX (Accessibility)
+ * Priority: Low
+ * Description: Text colors in Onboarding did not meet WCAG AA contrast ratio standards.
+ *
+ * Fix:
+ * - Headings (`h1`) → `text-t-primary-dark`
+ * - Paragraphs (`p`) → `text-t-muted-dark`
+ * - Verified color contrast meets WCAG AA for normal text (4.5:1)
+ *
+ * Accessibility Enhancements:
+ * - Step images use `role="img"` with `aria-label`
+ * - Progress dots include `aria-label` for screen readers
+ * - Buttons have descriptive `aria-label`s
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
@@ -63,13 +82,13 @@ function Onboarding() {
                     <div className="flex items-center justify-between mb-10">
                         <div className="flex items-center gap-2">
                             <span aria-hidden="true" className="text-xl">≡</span>
-                            <span className="text-xl font-bold tracking-tight">tradazone</span>
+                            <span className="text-xl font-bold tracking-tight text-t-primary-dark">tradazone</span>
                         </div>
 
                         <button
                             onClick={() => navigate('/signin')}
                             aria-label="Skip onboarding and go to sign in"
-                            className="text-sm text-t-muted hover:text-brand transition-colors"
+                            className="text-sm text-t-muted-dark hover:text-brand transition-colors"
                         >
                             Skip
                         </button>
@@ -85,11 +104,11 @@ function Onboarding() {
                             {steps[currentStep].image}
                         </div>
 
-                        <h1 className="text-2xl font-bold text-t-primary mb-3">
+                        <h1 className="text-2xl font-bold text-t-primary-dark mb-3">
                             {steps[currentStep].title}
                         </h1>
 
-                        <p className="text-t-muted max-w-sm mx-auto">
+                        <p className="text-t-muted-dark max-w-sm mx-auto">
                             {steps[currentStep].description}
                         </p>
                     </div>
@@ -120,7 +139,7 @@ function Onboarding() {
                                 <button
                                     onClick={handlePrev}
                                     aria-label="Go to previous step"
-                                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 text-sm font-semibold bg-white text-t-primary border border-border hover:bg-gray-50 active:scale-95 transition-all"
+                                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 text-sm font-semibold bg-white text-t-primary-dark border border-border hover:bg-gray-50 active:scale-95 transition-all"
                                 >
                                     <ArrowLeft size={18} aria-hidden="true" />
                                     Back
