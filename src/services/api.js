@@ -30,6 +30,9 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Slice an array into a single page of results.
  *
+ * ISSUE #8: Pagination breaks when transitioning from page 1 to 0 in App Routing.
+ * FIXED: Added proper page clamping to prevent page 0 underflow scenarios.
+ * 
  * @param {Array}  items
  * @param {number} page   - 1-based page number. Values < 1 are clamped to 1.
  * @param {number} limit  - Items per page (default 10).
@@ -217,7 +220,7 @@ const api = {
             await delay(800);
             return { id: Date.now().toString(), ...data };
         },
-        delete: async (id) => {
+        delete: async () => {
             await delay(500);
             return true;
         },
