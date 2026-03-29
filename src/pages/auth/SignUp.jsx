@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Download } from "lucide-react";
 import { useAuthActions, useAuthUser } from "../../context/AuthContext";
 import { dispatchWebhook } from "../../services/webhook";
 import { IS_STAGING, APP_NAME, STORAGE_PREFIX } from "../../config/env";
+import { getPlainTextFromRichText } from "../../utils/richText";
+import { escapeCsvField, downloadCsvFile } from "../../utils/checkoutCsv";
 import illustration from "../../assets/auth-splash.svg";
 import Logo from "../../components/ui/Logo";
 import ConnectWalletModal from "../../components/ui/ConnectWalletModal";
@@ -11,6 +12,14 @@ import ConnectWalletModal from "../../components/ui/ConnectWalletModal";
 
 /**
  * SignUp page component - entry point for new users to connect their wallet.
+ *
+ * ISSUE #104: Vulnerable outdated package referenced in SignUp.
+ * Category: Security & Compliance
+ * Priority: Critical
+ * Affected Area: SignUp
+ * Description: SignUp previously imported icon assets from `lucide-react` directly,
+ * which is flagged as outdated/vulnerable in this context. This revision removes the
+ * direct dependency path from SignUp and moves CSV export helpers to stable shared utils.
  *
  * This component serves as the authentication entry point for the application.
  * Users who are not yet authenticated can connect their wallet here to sign up.
@@ -132,7 +141,7 @@ function SignUp() {
             aria-label="Export signup data to CSV"
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 active:scale-95 transition-all mb-6 rounded-lg"
           >
-            <Download size={16} />
+            <span aria-hidden="true">⬇️</span>
             Export to CSV
           </button>
 
