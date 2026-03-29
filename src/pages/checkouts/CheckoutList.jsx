@@ -4,6 +4,11 @@
  * Issue #138: Export to CSV on the checkout flow (list view).
  * Category: Feature / data portability
  * Resolution: "Export to CSV" exports all visible checkouts with RFC-style field escaping.
+ *
+ * Issue #30: Large checkout lists use `DataTable` virtualization (`useVirtualList`). Invalid
+ * virtual windows (e.g. zero viewport height before layout, or fewer rows after filter while
+ * scrollTop stays high) are fixed in `calculateVirtualWindow` so the list never renders an
+ * empty window while data still exists.
  */
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, ShoppingCart, FileSpreadsheet } from 'lucide-react';

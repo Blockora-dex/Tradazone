@@ -31,6 +31,12 @@
  * Limitations:
  *  - Assumes all items share an approximately uniform height (`itemHeight`).
  *  - For highly variable item heights prefer @tanstack/react-virtual.
+ *
+ * Issue #30 (Checkout flow / virtual lists): Pagination/windowing broke when transitioning
+ * to an invalid range — e.g. `viewportHeight === 0` before ResizeObserver runs, or a large
+ * `scrollTop` after the filtered item count shrinks so `firstIndex` > `lastIndex`. Consumers
+ * then rendered zero rows despite `itemCount > 0`. We clamp `firstIndex`/`lastIndex` to a
+ * valid inclusive range before computing paddings.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -52,11 +58,22 @@ export function calculateVirtualWindow({ scrollTop, viewportHeight, itemHeight, 
     return { firstIndex: 0, lastIndex: -1, topPadding: 0, bottomPadding: 0, totalHeight: 0 };
   }
 
-  const firstIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
-  const lastIndex = Math.min(
-    itemCount - 1,
-    Math.ceil((scrollTop + viewportHeight) / itemHeight) + overscan,
+  const maxIndex = itemCount - 1;
+  const safeScroll = Number.isFinite(scrollTop) ? Math.max(0, scrollTop) : 0;
+  const safeViewport = Number.isFinite(viewportHeight) ? Math.max(0, viewportHeight) : 0;
+
+  let firstIndex = Math.max(0, Math.floor(safeScroll / itemHeight) - overscan);
+  let lastIndex = Math.min(
+    maxIndex,
+    Math.ceil((safeScroll + safeViewport) / itemHeight) + overscan,
   );
+
+  // Issue #30: invalid window (e.g. viewport not measured yet, or list shrank under scroll)
+  if (firstIndex > lastIndex) {
+    firstIndex = Math.min(firstIndex, maxIndex);
+    lastIndex = Math.min(maxIndex, Math.max(firstIndex, lastIndex));
+    firstIndex = Math.min(firstIndex, lastIndex);
+  }
 
   return {
     firstIndex,

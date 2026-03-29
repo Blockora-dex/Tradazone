@@ -87,6 +87,37 @@ describe('calculateVirtualWindow()', () => {
         expect(result.lastIndex).toBe(4);
     });
 
+    it('Issue #30: clamps when viewportHeight is 0 and scrollTop implies firstIndex > lastIndex', () => {
+        const result = calculateVirtualWindow({
+            scrollTop: 1000,
+            viewportHeight: 0,
+            itemHeight: 52,
+            overscan: 3,
+            itemCount: 5,
+        });
+        expect(result.firstIndex).toBeLessThanOrEqual(result.lastIndex);
+        expect(result.lastIndex).toBeLessThanOrEqual(4);
+        const virtualLen = result.lastIndex - result.firstIndex + 1;
+        expect(virtualLen).toBeGreaterThan(0);
+    });
+
+    it('Issue #30: after clamp, top + bottom + visible rows matches totalHeight', () => {
+        const itemHeight = 52;
+        const itemCount = 5;
+        const result = calculateVirtualWindow({
+            scrollTop: 800,
+            viewportHeight: 0,
+            itemHeight,
+            overscan: 3,
+            itemCount,
+        });
+        expect(result.firstIndex).toBeLessThanOrEqual(result.lastIndex);
+        const visibleCount = result.lastIndex - result.firstIndex + 1;
+        expect(
+            result.topPadding + result.bottomPadding + visibleCount * itemHeight,
+        ).toBe(result.totalHeight);
+    });
+
     it('firstIndex is 0 even with large overscan at top of list', () => {
         const result = calculateVirtualWindow({
             scrollTop: 0, viewportHeight: 100, itemHeight: 80, overscan: 10, itemCount: 5,
