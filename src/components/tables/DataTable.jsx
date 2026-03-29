@@ -148,24 +148,6 @@ function DataTable({
     }
   };
 
-  const isAllSelected = rawData.length > 0 && selectedItems.length === rawData.length;
-
-  const handleSelectItem = useCallback(
-    (event, id) => {
-      event.stopPropagation();
-
-  // Always call the hook (React rules prohibit conditional hook calls)
-  const { scrollRef, virtualItems, topPadding, bottomPadding } = useVirtualList(
-    {
-      items: filteredData,
-      itemHeight: ROW_HEIGHT,
-    },
-  );
-
-  const rowsToRender = shouldVirtualize
-    ? virtualItems.map((v) => ({ ...v.item, _virtualIndex: v.index }))
-    : filteredData.map((item, index) => ({ ...item, _virtualIndex: index }));
-
   return (
     <div
       className={`bg-white border border-border rounded-card overflow-hidden dark:bg-zinc-950 dark:border-zinc-800 transition-colors ${className}`}

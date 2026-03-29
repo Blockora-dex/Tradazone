@@ -38,7 +38,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  loadSession,
   useAuthActions,
   useAuthIsAuthenticated,
   useAuthWalletState,
@@ -47,29 +46,9 @@ import { AlertCircle } from "lucide-react";
 import { STORAGE_PREFIX } from "../../config/env";
 import illustration from "../../assets/auth-splash.svg";
 import Logo from "../../components/ui/Logo";
-import RichTextEditor from "../../components/forms/RichTextEditor";
 import ConnectWalletModal from "../../components/ui/ConnectWalletModal";
 import StagingBanner from "../../components/ui/StagingBanner";
-import { getPlainTextFromRichText, normalizeRichTextHtml } from "../../utils/richText";
 
-const SIGNIN_DESCRIPTION_DRAFT_KEY = `${STORAGE_PREFIX}_signin_description_draft`;
-
-function readDescriptionDraft(profileDescription = "") {
-  const savedDraft = localStorage.getItem(SIGNIN_DESCRIPTION_DRAFT_KEY) || "";
-  return normalizeRichTextHtml(profileDescription || savedDraft);
-}
-
-function persistDescriptionDraft(value) {
-  const normalized = normalizeRichTextHtml(value);
-
-  if (normalized) {
-    localStorage.setItem(SIGNIN_DESCRIPTION_DRAFT_KEY, normalized);
-  } else {
-    localStorage.removeItem(SIGNIN_DESCRIPTION_DRAFT_KEY);
-  }
-
-  return normalized;
-}
 
 /**
  * @fileoverview SignIn page — handles wallet connection and authentication.
@@ -91,9 +70,6 @@ function SignIn() {
   const { lastWallet } = useAuthWalletState();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [descriptionDraft, setDescriptionDraft] = useState(() =>
-    readDescriptionDraft(loadSession()?.profileDescription ?? ""),
-  );
 
   const redirectTo = searchParams.get("redirect") || "/";
   const sessionExpired = searchParams.get("reason") === "expired";
@@ -104,20 +80,10 @@ function SignIn() {
     }
   }, [isAuthenticated, navigate, redirectTo]);
 
-  const handleDescriptionChange = useCallback((value) => {
-    const normalized = persistDescriptionDraft(value);
-    setDescriptionDraft(normalized);
-  }, []);
 
   const handleConnectSuccess = useCallback(() => {
-    const normalizedDraft = persistDescriptionDraft(descriptionDraft);
-
-    if (normalizedDraft) {
-      updateProfile({ profileDescription: normalizedDraft });
-    }
-
     navigate(redirectTo, { replace: true });
-  }, [descriptionDraft, navigate, redirectTo, updateProfile]);
+  }, [navigate, redirectTo]);
 
   const handleExportToCSV = useCallback(() => {
     const status = isAuthenticated ? "Connected" : "Disconnected";
@@ -138,7 +104,6 @@ function SignIn() {
   const shortWallet = lastWallet
     ? `${lastWallet.slice(0, 6)}...${lastWallet.slice(-4)}`
     : null;
-  const hasDescriptionDraft = Boolean(getPlainTextFromRichText(descriptionDraft));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -180,32 +145,6 @@ function SignIn() {
             </div>
           )}
 
-          <div className="mb-6 rounded-xl border border-border bg-gray-50/80 p-4">
-            <div className="mb-3">
-              <h2 className="text-sm font-semibold text-t-primary">
-                Business description draft
-              </h2>
-              <p className="text-xs text-t-muted">
-                Add formatted context about your business before you connect.
-                Tradazone keeps this draft on this device and syncs it into your
-                profile after the next successful wallet session.
-              </p>
-            </div>
-            <RichTextEditor
-              id="signin-business-description"
-              label="Business Description"
-              value={descriptionDraft}
-              onChange={handleDescriptionChange}
-              placeholder="Describe your business, products, or services before connecting..."
-              hint="Supports bold, italic, and bullet lists. The draft is sanitized before it is stored."
-            />
-            {hasDescriptionDraft && (
-              <p className="mt-3 text-xs font-medium text-brand">
-                Your latest description draft will be attached to the next
-                wallet connection.
-              </p>
-            )}
-          </div>
 
           {/* Connect Wallet Button */}
           <button

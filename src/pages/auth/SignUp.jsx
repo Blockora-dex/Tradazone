@@ -7,28 +7,7 @@ import { IS_STAGING, APP_NAME, STORAGE_PREFIX } from "../../config/env";
 import illustration from "../../assets/auth-splash.svg";
 import Logo from "../../components/ui/Logo";
 import ConnectWalletModal from "../../components/ui/ConnectWalletModal";
-import RichTextEditor from "../../components/forms/RichTextEditor";
-import { getPlainTextFromRichText, normalizeRichTextHtml } from "../../utils/richText";
 
-const SIGNUP_DESCRIPTION_DRAFT_KEY = `${STORAGE_PREFIX}_signup_description_draft`;
-
-function readDescriptionDraft(profileDescription = "") {
-  const savedDraft = localStorage.getItem(SIGNUP_DESCRIPTION_DRAFT_KEY) || "";
-  // Lightweight normalization ensures we don't start with broken HTML
-  return normalizeRichTextHtml(profileDescription || savedDraft);
-}
-
-function persistDescriptionDraft(value) {
-  const normalized = normalizeRichTextHtml(value);
-
-  if (normalized) {
-    localStorage.setItem(SIGNUP_DESCRIPTION_DRAFT_KEY, normalized);
-  } else {
-    localStorage.removeItem(SIGNUP_DESCRIPTION_DRAFT_KEY);
-  }
-
-  return normalized;
-}
 
 /**
  * SignUp page component - entry point for new users to connect their wallet.
@@ -47,10 +26,6 @@ function SignUp() {
 
   /** @type {boolean} */
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [descriptionDraft, setDescriptionDraft] = useState(() =>
-    readDescriptionDraft(user?.profileDescription),
-  );
 
   /** @type {string} */
   const redirectTo = searchParams.get("redirect") || "/";
@@ -79,24 +54,14 @@ function SignUp() {
     // Mark as first-time user so Onboarding/Welcome logic can trigger if needed
     localStorage.setItem("tradazone_onboarded", "false");
 
-    // Sync business description draft into the profile session
-    const normalizedDraft = persistDescriptionDraft(descriptionDraft);
-    if (normalizedDraft) {
-      updateProfile({ profileDescription: normalizedDraft });
-    }
-
     // Fire user.signed_up webhook (non-blocking)
     dispatchWebhook("user.signed_up", {
       walletAddress: walletAddress || user.walletAddress,
       walletType: walletType || user.walletType,
     });
     navigate(redirectTo, { replace: true });
-  }, [descriptionDraft, navigate, redirectTo, updateProfile, user.walletAddress, user.walletType]);
+  }, [navigate, redirectTo, user.walletAddress, user.walletType]);
 
-  const handleDescriptionChange = useCallback((value) => {
-    const normalized = persistDescriptionDraft(value);
-    setDescriptionDraft(normalized);
-  }, []);
 
   /**
    * Exports current auth state to CSV file.
@@ -120,7 +85,6 @@ function SignUp() {
     document.body.removeChild(link);
   };
 
-  const hasDescriptionDraft = Boolean(getPlainTextFromRichText(descriptionDraft));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -152,36 +116,6 @@ function SignUp() {
             Connect your wallet to get started
           </p>
 
-          <div className="mb-6 rounded-xl border border-border bg-gray-50/80 p-4">
-            <div className="mb-3">
-              <h2 className="text-sm font-semibold text-t-primary">
-                Business description draft
-              </h2>
-              <p className="text-xs text-t-muted">
-                Add formatted context about your business before you connect.
-                Tradazone keeps this draft on this device and syncs it into your
-                profile after your first successful wallet session.
-              </p>
-            </div>
-            {/* 
-                We use a lightweight custom RichTextEditor instead of a heavy library 
-                like Quill or Draft.js to keep the initial auth bundle small.
-                Security: Content is sanitized via normalizeRichTextHtml before persistence.
-            */}
-            <RichTextEditor
-              id="signup-business-description"
-              label="Business Description"
-              value={descriptionDraft}
-              onChange={handleDescriptionChange}
-              placeholder="Describe your business, products, or services before connecting..."
-              hint="Supports bold, italic, and bullet lists. The draft is sanitized for security."
-            />
-            {hasDescriptionDraft && (
-              <p className="mt-3 text-xs font-medium text-brand">
-                Your latest description draft will be attached to your new profile.
-              </p>
-            )}
-          </div>
 
           {/* Connect Wallet Button */}
           <button

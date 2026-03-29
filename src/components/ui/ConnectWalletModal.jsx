@@ -10,10 +10,20 @@
  *  - Generic Starknet wallets (Braavos, etc.)
  *  - Generic EVM / browser-injected wallets
  *
+ * ISSUE: #118 (Rich text descriptions in ConnectWalletModal)
+ * Category: Feature Enhancement
+ * Priority: Critical
+ * Affected Area: ConnectWalletModal
+ * Description: Integrated a custom RichTextEditor directly into the wallet
+ * connection flow. This centralizes the "Business Description" draft logic
+ * that was previously duplicated across SignUp and SignIn pages. The modal
+ * now persists an unauthenticated draft in localStorage and automatically
+ * syncs it to the user's profile upon successful connection.
+ *
  * @module ConnectWalletModal
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { X, ExternalLink, AlertCircle, ChevronLeft } from 'lucide-react';
 import { useDebounce } from '../../hooks/useDebounce';
 import Logo from './Logo';
@@ -26,11 +36,16 @@ import {
 import { useVirtualList } from '../../hooks/useVirtualList';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import StagingBanner from './StagingBanner';
+const RichTextEditor = lazy(() => import('../forms/RichTextEditor'));
+import { STORAGE_PREFIX } from '../../config/env';
+import { normalizeRichTextHtml } from '../../utils/richText';
 
 // VIRTUALIZATION CONSTANTS
 const VIRTUALIZATION_THRESHOLD = 8;
 const WALLET_ROW_HEIGHT = 88;
 const WALLET_LIST_MAX_HEIGHT = 340;
+
+const DESCRIPTION_DRAFT_KEY = `${STORAGE_PREFIX}_business_description_draft`;
 
 // HELPERS FOR SENSITIVE DATA HIDING (Issue #204)
 function getSafeErrorMessage(msg) {
@@ -117,10 +132,16 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
 
     const [view, setView] = useState('primary');
 
-    const { completeWalletLogin, disconnectAll } = useAuthActions();
+    const { completeWalletLogin, disconnectAll, updateProfile } = useAuthActions();
     const { wallet } = useAuthWalletState();
+    const { user } = useAuthUser();
     const { installed, availableWallets } = useAuthWalletCatalog();
     const lobstrHook = useLobstr();
+
+    const [descriptionDraft, setDescriptionDraft] = useState(() => {
+        const saved = localStorage.getItem(DESCRIPTION_DRAFT_KEY) || "";
+        return normalizeRichTextHtml(user?.profileDescription || saved);
+    });
 
     const modalRef = useFocusTrap({ isOpen, onClose, initialFocus: true, restoreFocus: true });
 
@@ -131,8 +152,29 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
             setView('primary');
             setSearchQuery('');
             setFilterNetwork('all');
+            
+            // Sync draft with current user description if available
+            if (user?.profileDescription) {
+                setDescriptionDraft(normalizeRichTextHtml(user.profileDescription));
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, user?.profileDescription]);
+
+    const handleDescriptionChange = (value) => {
+        const normalized = normalizeRichTextHtml(value);
+        setDescriptionDraft(normalized);
+        if (normalized) {
+            localStorage.setItem(DESCRIPTION_DRAFT_KEY, normalized);
+        } else {
+            localStorage.removeItem(DESCRIPTION_DRAFT_KEY);
+        }
+    };
+
+    const syncDescriptionOnConnect = async () => {
+        if (descriptionDraft) {
+            await updateProfile({ profileDescription: descriptionDraft });
+        }
+    };
 
     // #64: filter uses debouncedSearchQuery so rapid keystrokes don't trigger
     // a re-render of the wallet list on every character.
@@ -180,6 +222,7 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
             const result = await lobstrHook.connect();
             if (result?.success) {
                 completeWalletLogin(result.address, 'stellar');
+                await syncDescriptionOnConnect();
                 if (onConnect) onConnect('stellar');
             } else if (result?.error) {
                 setError({ type: 'stellar', code: result.error === 'NOT_INSTALLED' ? 'not_installed' : 'failed', message: result.error });
@@ -195,6 +238,7 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
         try {
             const result = await connectWalletFn(type, provider);
             if (result.success) {
+                await syncDescriptionOnConnect();
                 if (onConnect) onConnect(type);
             } else if (result.error === 'not_installed') {
                 setError({ type: w.network, code: 'not_installed' });
@@ -240,6 +284,26 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
                                 ))}
                             </div>
                         </div>
+
+                        {view === 'primary' && !debouncedSearchQuery && (
+                            <div className="mb-6 animate-fade-in min-h-[200px]">
+                                <Suspense fallback={
+                                    <div className="flex flex-col gap-1.5 animate-pulse">
+                                        <div className="h-4 w-32 bg-gray-200 rounded" />
+                                        <div className="h-36 w-full bg-gray-100 rounded-lg border border-border" />
+                                    </div>
+                                }>
+                                    <RichTextEditor
+                                        id="modal-business-description"
+                                        label="Business description draft"
+                                        value={descriptionDraft}
+                                        onChange={handleDescriptionChange}
+                                        placeholder="Describe your business context before connecting..."
+                                        hint="This description will be synced to your profile after connection."
+                                    />
+                                </Suspense>
+                            </div>
+                        )}
 
                         <div ref={shouldVirtualize ? scrollRef : undefined} data-testid="wallet-list-container" style={shouldVirtualize ? { maxHeight: WALLET_LIST_MAX_HEIGHT, overflowY: 'auto' } : undefined}>
                             {shouldVirtualize && <div style={{ height: topPadding }} aria-hidden="true" />}
