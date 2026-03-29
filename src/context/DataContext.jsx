@@ -308,27 +308,8 @@ export function DataProvider({ children }) {
         });
       }
     },
-  const recordCheckoutView = useCallback((checkoutId) => {
-    const target = checkouts.find(c => c.id === checkoutId);
-    if (!target) return;
-
-    const nextViews = (target.views || 0) + 1;
-    setCheckouts((prev) => {
-      const next = prev.map((c) =>
-        c.id === checkoutId ? { ...c, views: nextViews } : c,
-      );
-      save(KEYS.checkouts, next);
-      return next;
-    });
-
-    dispatchWebhook('checkout.viewed', {
-      id: target.id,
-      title: target.title,
-      amount: target.amount,
-      currency: target.currency,
-      views: nextViews,
-    });
-  }, [checkouts]);
+    [checkouts],
+  );
 
   const recordCheckoutView = useCallback(
     (checkoutId) => {
@@ -366,7 +347,6 @@ export function DataProvider({ children }) {
       deleteItems,
       addInvoice,
       addCheckout,
-      addCheckout,
       markCheckoutPaid,
       recordCheckoutView,
       updateCustomerDescription,
@@ -380,7 +360,6 @@ export function DataProvider({ children }) {
       addItem,
       deleteItems,
       addInvoice,
-      addCheckout,
       addCheckout,
       markCheckoutPaid,
       recordCheckoutView,
