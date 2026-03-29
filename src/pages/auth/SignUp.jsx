@@ -9,6 +9,7 @@ import Logo from "../../components/ui/Logo";
 import ConnectWalletModal from "../../components/ui/ConnectWalletModal";
 import RichTextEditor from "../../components/forms/RichTextEditor";
 import { getPlainTextFromRichText, normalizeRichTextHtml } from "../../utils/richText";
+import { escapeCsvField, downloadCsvFile } from "../../utils/checkoutCsv";
 
 const SIGNUP_DESCRIPTION_DRAFT_KEY = `${STORAGE_PREFIX}_signup_description_draft`;
 
@@ -100,24 +101,25 @@ function SignUp() {
 
   /**
    * Exports current auth state to CSV file.
-   * Downloads auth_data.csv with wallet address and signup status.
+   * Downloads auth_data.csv with wallet address, status, and description draft.
+   * Issue #130: Fixed flawed implementation that missed business description.
    */
   const handleExportToCSV = () => {
     const isAuthenticated = user?.isAuthenticated ?? false;
     const status = isAuthenticated ? "Connected" : "Disconnected";
     const walletAddress = user?.walletAddress || "None";
+    const description = getPlainTextFromRichText(descriptionDraft) || "None";
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      "Wallet Address,Status\n" +
-      `${walletAddress},${status}\n`;
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "auth_data.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const headers = ["Wallet Address", "Status", "Business Description"];
+    const values = [walletAddress, status, description];
+
+    const csvContent = [
+      headers.map(escapeCsvField).join(","),
+      values.map(escapeCsvField).join(","),
+    ].join("\n");
+
+    const timestamp = new Date().getTime();
+    downloadCsvFile(`tradazone_signup_data_${timestamp}.csv`, csvContent);
   };
 
   const hasDescriptionDraft = Boolean(getPlainTextFromRichText(descriptionDraft));
