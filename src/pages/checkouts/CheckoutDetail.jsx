@@ -4,6 +4,7 @@ import Button from '../../components/forms/Button';
 import StatusBadge from '../../components/tables/StatusBadge';
 import { useData } from '../../context/DataContext';
 import { formatUtcDate } from '../../utils/date';
+import LazyChart from '../../components/ui/LazyChart';
 
 function CheckoutDetail() {
     const { id } = useParams();
@@ -13,6 +14,33 @@ function CheckoutDetail() {
     if (!checkout) return <div className="p-8"><p className="text-t-muted">Checkout not found</p></div>;
 
     const copyLink = () => { navigator.clipboard.writeText(checkout.paymentLink); };
+
+    const chartData = {
+        labels: ['Views', 'Payments'],
+        datasets: [{
+            label: 'Engagement',
+            data: [checkout.views, checkout.payments],
+            backgroundColor: ['rgba(67, 56, 202, 0.4)', 'rgba(249, 115, 22, 0.4)'],
+            borderColor: ['rgb(67, 56, 202)', 'rgb(249, 115, 22)'],
+            borderWidth: 1.5,
+            borderRadius: 6,
+        }]
+    };
+
+    const chartOptions = {
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    };
 
     return (
         <div>
@@ -44,7 +72,7 @@ function CheckoutDetail() {
                 </div>
             </div>
 
-            <div className="bg-white border border-border rounded-card p-6">
+            <div className="bg-white border border-border rounded-card p-6 mb-5">
                 <h2 className="text-base font-semibold mb-4">Payment Link</h2>
                 <div className="flex items-center gap-3">
                     <div className="flex-1 flex items-center gap-2 px-4 py-3 bg-page rounded-lg">
@@ -53,6 +81,18 @@ function CheckoutDetail() {
                     </div>
                     <Button variant="secondary" icon={Copy} onClick={copyLink}>Copy</Button>
                     <Button variant="secondary" icon={ExternalLink}>Open</Button>
+                </div>
+            </div>
+
+            <div className="bg-white border border-border rounded-card p-6">
+                <h2 className="text-base font-semibold mb-4">Performance Metrics</h2>
+                <div className="bg-page/40 rounded-xl p-4">
+                    <LazyChart
+                        type="bar"
+                        data={chartData}
+                        options={chartOptions}
+                        height={240}
+                    />
                 </div>
             </div>
         </div>

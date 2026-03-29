@@ -163,6 +163,9 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
         }
     };
 
+    /**
+     * Initiates a wallet connection.
+     */
     const handleConnect = async (w) => {
         if (connecting) return;
         if (w.id === 'stellar') {
@@ -229,6 +232,7 @@ function ConnectWalletModal({ isOpen, onClose, onConnect, connectWalletFn }) {
                                 ))}
                             </div>
                         </div>
+
                         <div ref={shouldVirtualize ? scrollRef : undefined} data-testid="wallet-list-container" style={shouldVirtualize ? { maxHeight: WALLET_LIST_MAX_HEIGHT, overflowY: 'auto' } : undefined}>
                             {shouldVirtualize && <div style={{ height: topPadding }} aria-hidden="true" />}
                             <div className="flex flex-col gap-3">

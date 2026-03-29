@@ -12,6 +12,7 @@ function CreateCheckout() {
     const { addCheckout } = useData();
     const [formData, setFormData] = useState({ title: '', description: '', amount: '', currency: 'STRK' });
     const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const validate = () => {
         const newErrors = {};
@@ -28,21 +29,34 @@ function CreateCheckout() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        // Guard: prevent duplicate submissions
+        if (isSubmitting) {
+            console.warn('[CreateCheckout] Duplicate submission attempt blocked');
+            return;
+        }
+        
         const validationErrors = validate();
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
             return;
         }
-        const checkout = addCheckout(formData);
-        // Dispatch checkout.created webhook — fire-and-forget
-        dispatchWebhook('checkout.created', {
-            id: checkout.id,
-            title: checkout.title,
-            amount: checkout.amount,
-            currency: checkout.currency,
-            paymentLink: checkout.paymentLink,
-        });
-        navigate('/checkout');
+        
+        setIsSubmitting(true);
+        try {
+            const checkout = addCheckout(formData);
+            // Dispatch checkout.created webhook — fire-and-forget
+            dispatchWebhook('checkout.created', {
+                id: checkout.id,
+                title: checkout.title,
+                amount: checkout.amount,
+                currency: checkout.currency,
+                paymentLink: checkout.paymentLink,
+            });
+            navigate('/checkout');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleChange = (field) => (e) => { 
@@ -109,8 +123,10 @@ function CreateCheckout() {
                         </div>
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                        <Button variant="secondary" onClick={() => navigate('/checkout')}>Cancel</Button>
-                        <Button type="submit" variant="primary">Create Checkout</Button>
+                        <Button variant="secondary" onClick={() => navigate('/checkout')} disabled={isSubmitting}>Cancel</Button>
+                        <Button type="submit" variant="primary" disabled={isSubmitting}>
+                            {isSubmitting ? 'Creating...' : 'Create Checkout'}
+                        </Button>
                     </div>
                 </form>
 

@@ -4,15 +4,13 @@
  * ADR-002: docs/adr/002-app-routing-stack.md (Issue #202)
  * - BrowserRouter + nested Routes; protected shell via PrivateRoute + Layout.
  *
- * ISSUE #55: Missing loading spinner during API delay in App Routing.
- * Category: UI/UX
- * Priority: High
- * Affected Area: App Routing
- * Description: Implemented React.lazy and Suspense with a LoadingSpinner fallback 
- * to ensure visual feedback during route transitions and chunk loading.
+ * PERFORMANCE: Route components are loaded via React.lazy() so the JS for 
+ * each feature is fetched on-demand. Chart.js (used within the checkout flow) 
+ * is further isolated in its own `charts` Rollup chunk.
+ * See: src/components/ui/LazyChart.jsx and vite.config.js for details.
  */
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/routing/PrivateRoute';
 import LoadingSpinner from './components/ui/LoadingSpinner';
@@ -39,13 +37,12 @@ const ProfileSettings = lazy(() => import('./pages/settings/ProfileSettings'));
 const PaymentSettings = lazy(() => import('./pages/settings/PaymentSettings'));
 const NotificationSettings = lazy(() => import('./pages/settings/NotificationSettings'));
 const PasswordSettings = lazy(() => import('./pages/settings/PasswordSettings'));
+
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { ThemeProvider } from './context/ThemeContext';
 
-/**
- * Webhook integration — checkout events
- *
+ /** 
  * The following checkout lifecycle events are dispatched via
  * `src/services/webhook.js` (dispatchWebhook) at the route level:
  *
@@ -68,10 +65,17 @@ function App() {
         <BrowserRouter basename="/Tradazone">
           <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            {/* Public routes */}
+            {/* Public routes — checkout payment page is lazy-loaded */}
+            <Route
+              path="/pay/:checkoutId"
+              element={
+                <Suspense fallback={<div className="min-h-screen bg-brand" aria-busy="true" aria-label="Loading…" />}>
+                  <MailCheckout />
+                </Suspense>
+              }
+            />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/pay/:checkoutId" element={<MailCheckout />} />
             <Route path="/invoice/:id" element={<InvoicePreview />} />
 
             {/* Protected routes — require authentication */}
@@ -87,9 +91,13 @@ function App() {
               <Route path="customers" element={<CustomerList />} />
               <Route path="customers/add" element={<AddCustomer />} />
               <Route path="customers/:id" element={<CustomerDetail />} />
-              <Route path="checkout" element={<CheckoutList />} />
-              <Route path="checkout/create" element={<CreateCheckout />} />
-              <Route path="checkout/:id" element={<CheckoutDetail />} />
+              {/* Checkout routes — wrapped in Suspense so the lazy chunks
+                  resolve gracefully while the user navigates */}
+              <Suspense fallback={<div className="p-8 text-center text-sm text-gray-400" aria-busy="true">Loading…</div>}>
+                <Route path="checkout" element={<CheckoutList />} />
+                <Route path="checkout/create" element={<CreateCheckout />} />
+                <Route path="checkout/:id" element={<CheckoutDetail />} />
+              </Suspense>
               <Route path="invoices" element={<InvoiceList />} />
               <Route path="invoices/create" element={<CreateInvoice />} />
               <Route path="invoices/:id" element={<InvoiceDetail />} />

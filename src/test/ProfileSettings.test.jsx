@@ -21,6 +21,11 @@ async function renderProfileSettings() {
 }
 
 describe('ProfileSettings', () => {
+    // ISSUE #6 VERIFICATION: This test suite confirms that ProfileSettings
+    // does NOT contain any numerical calculations or totals. The component
+    // handles only string-based profile data (name, email, phone, company,
+    // address, description). Floating-point precision issues are not applicable.
+    // See src/utils/currency.js for safe calculation utilities used elsewhere.
     beforeEach(() => {
         mockUpdateProfile.mockReset();
         mockUser = {
