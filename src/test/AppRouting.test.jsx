@@ -1,7 +1,8 @@
 /**
  * @fileoverview Unit tests for App Routing critical logic — Issue #157
  *
- * ISSUE: #157 — Zero unit tests coverage found for the critical logic in App Routing.
+ * ISSUE: #146 — Zero unit tests coverage found for the critical logic in App Routing.
+ * ISSUE: #157 — Existing App Routing coverage check suite.
  * Category: Testing / App Routing
  * Affected Area: App Routing (App.jsx route table, provider nesting, lazy loading)
  *

@@ -2,6 +2,7 @@
  * @fileoverview Visual snapshot tests for App Routing components — Issue #141
  *
  * ISSUE: #141 — Lack of visual snapshot testing for the App Routing components.
+ * ISSUE: #146 — Zero unit tests coverage found for the critical logic in App Routing.
  * Category: Testing / App Routing
  * Affected Area: App Routing (App.jsx route table, provider nesting, lazy loading)
  *
@@ -10,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import React from 'react';
 
@@ -143,6 +144,19 @@ describe('App Routing snapshots', () => {
             </MemoryRouter>
         );
         expect(container.firstChild).toMatchSnapshot();
+    });
+
+    it('renders protected nested /checkout route while authenticated', async () => {
+        const { loadSession } = await import('../context/AuthContext');
+        vi.mocked(loadSession).mockReturnValue({ token: 'mock-token' });
+
+        render(
+            <MemoryRouter initialEntries={['/Tradazone/checkout']}>
+                <App />
+            </MemoryRouter>
+        );
+
+        expect(screen.getByTestId('checkoutlist-page')).toBeTruthy();
     });
 
     it('matches snapshot for Public Route — /pay/:checkoutId (MailCheckout)', () => {
