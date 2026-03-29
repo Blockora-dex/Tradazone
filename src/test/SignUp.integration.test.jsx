@@ -4,6 +4,7 @@ import React from 'react';
 import { AuthProvider } from '../context/AuthContext';
 import { STORAGE_PREFIX } from '../config/env';
 import SignUp from '../pages/auth/SignUp';
+import * as Mocks from './mocks/signUpMocks';
 
 /**
  * SignUp Integration Tests
@@ -34,8 +35,9 @@ vi.mock('react-router-dom', async () => {
 });
 
 // Mock services
+const mockDispatchWebhook = vi.fn().mockImplementation(() => Promise.resolve(Mocks.MOCK_WEBHOOK_SUCCESS));
 vi.mock('../services/webhook', () => ({
-    dispatchWebhook: vi.fn().mockResolvedValue({ ok: true }),
+    dispatchWebhook: (...args) => mockDispatchWebhook(...args),
 }));
 
 // Mock assets
@@ -70,6 +72,8 @@ describe('SignUp Integration Flow', () => {
         window.starknet_argentX = undefined;
         mockNavigate = vi.fn();
         mockSearchParams = new URLSearchParams();
+        mockDispatchWebhook.mockClear();
+        mockDispatchWebhook.mockImplementation(() => Promise.resolve(Mocks.MOCK_WEBHOOK_SUCCESS));
     });
 
     /**
@@ -79,7 +83,7 @@ describe('SignUp Integration Flow', () => {
      * 3. Triggers a redirect via useNavigate.
      */
     it('successfully connects wallet and updates context', async () => {
-        const mockAddress = '0x123abc';
+        const mockAddress = Mocks.MOCK_WALLET_SUCCESS.walletAddress;
         
         // Setup mock Starknet provider
         window.starknet_argentX = mockStarknet;
@@ -122,7 +126,8 @@ describe('SignUp Integration Flow', () => {
      */
     it('shows error on connection failure and does not update context', async () => {
         window.starknet_argentX = mockStarknet;
-        mockStarknet.enable.mockRejectedValue(new Error('User rejected'));
+        // FAILURE CASE: User rejection mock from centralized file
+        mockStarknet.enable.mockRejectedValue(Mocks.MOCK_WALLET_REJECTED);
 
         render(
             <AuthProvider>
@@ -151,7 +156,7 @@ describe('SignUp Integration Flow', () => {
     it('disables connect buttons while processing', async () => {
         window.starknet_argentX = mockStarknet;
         
-        // Mock a connection that stays pending
+        // PERFORMANCE CASE: Delayed connection simulation
         mockStarknet.enable.mockReturnValue(new Promise(() => {}));
 
         render(
