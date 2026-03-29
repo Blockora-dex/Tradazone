@@ -98,7 +98,7 @@ function DataTable({
   // Always call the hook (React rules prohibit conditional hook calls)
   const { scrollRef, virtualItems, topPadding, bottomPadding } = useVirtualList(
     {
-      items: data,
+      items: filteredData,
       itemHeight: ROW_HEIGHT,
     },
   );

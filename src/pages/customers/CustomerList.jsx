@@ -33,14 +33,7 @@ function CustomerList() {
   // Fallback to empty array if customers is null/undefined
   const safeCustomers = customers ?? [];
 
-  const filtered = query.trim()
-    ? safeCustomers.filter(
-        (c) =>
-          // Defensive check for name and email properties
-          c?.name?.toLowerCase().includes(query.toLowerCase()) ||
-          c?.email?.toLowerCase().includes(query.toLowerCase()),
-      )
-    : safeCustomers;
+  // Local search removed - now handled by DataTable dataType="customers"
 
   const columns = [
     { key: "name", header: "Name" },
