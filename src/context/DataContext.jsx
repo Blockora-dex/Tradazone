@@ -35,6 +35,9 @@
  * Central data and operation provider for customers, invoices, checkouts, and items.
  * Contains performance-related context split for checkout flow (#61) and
  * avoids excessive rerenders by memoizing operations and context values.
+ *
+ * ISSUE: #145 — Integration tests for context mutations live in
+ *   src/test/ContextMutations.integration.test.jsx (see README “Developer Setup Notes”).
  */
 import {
   createContext,
