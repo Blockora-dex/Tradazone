@@ -37,9 +37,10 @@
  * Tests: `src/test/AuthContext.csp.test.jsx`
  */
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import PrivateRoute from './components/routing/PrivateRoute';
+import CheckoutRoutesShell from './components/routing/CheckoutRoutesShell';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 
 const SignIn = lazy(() => import('./pages/auth/SignIn'));
@@ -69,19 +70,20 @@ import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { ThemeProvider } from './context/ThemeContext';
 
- /** 
- * The following checkout lifecycle events are dispatched via
- * `src/services/webhook.js` (dispatchWebhook) at the route level:
+ /**
+ * Checkout webhooks — `src/services/webhook.js` (dispatchWebhook)
  *
- * | Event              | Route / Component         | Trigger                          |
- * |--------------------|---------------------------|----------------------------------|
- * | checkout.created   | /checkout/create          | Form submit in CreateCheckout    |
- * | checkout.viewed    | /pay/:checkoutId          | Mount of MailCheckout            |
- * | checkout.paid      | /pay/:checkoutId          | Successful wallet connect        |
+ * Issue #119: Protected checkout list/create screens dispatch `checkout.route.entered`
+ * from `CheckoutRoutesShell` when the user navigates to `/checkout` or `/checkout/create`.
  *
- * The webhook endpoint is configured via `VITE_WEBHOOK_URL` (build-time) or
- * through Settings > Payments at runtime. See `src/services/webhook.js` for
- * the full dispatch contract and retry logic.
+ * | Event                    | Where / trigger                                              |
+ * |--------------------------|--------------------------------------------------------------|
+ * | checkout.route.entered   | App Routing: CheckoutRoutesShell (list or create segment)   |
+ * | checkout.created         | DataContext.addCheckout + CreateCheckout submit; payload    |
+ * | checkout.viewed          | MailCheckout mount; DataContext.recordCheckoutView (detail)   |
+ * | checkout.paid            | MailCheckout wallet connect; DataContext.markCheckoutPaid     |
+ *
+ * Endpoint: `VITE_WEBHOOK_URL` or Settings > Payments. See `webhook.js` for contract.
  */
 
 function App() {
@@ -148,7 +150,7 @@ function App() {
                       </div>
                     }
                   >
-                    <Outlet />
+                    <CheckoutRoutesShell />
                   </Suspense>
                 }
               >

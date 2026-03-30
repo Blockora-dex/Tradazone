@@ -253,6 +253,21 @@ describe('checkout route webhook triggers', () => {
         });
     });
 
+    it('checkout.route.entered includes screen and path (Issue #119)', async () => {
+        setWebhookUrl('https://example.com/hook');
+        const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+        vi.stubGlobal('fetch', mockFetch);
+
+        await dispatchWebhook('checkout.route.entered', {
+            screen: 'list',
+            path: '/checkout',
+        });
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.event).toBe('checkout.route.entered');
+        expect(body.payload).toEqual({ screen: 'list', path: '/checkout' });
+    });
+
     it('does not dispatch when no webhook URL is configured', async () => {
         const mockFetch = vi.fn();
         vi.stubGlobal('fetch', mockFetch);

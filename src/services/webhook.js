@@ -10,10 +10,12 @@
  * Client-side webhook dispatcher for Tradazone checkout events.
  *
  * Supported events:
- *   - user.signed_up      fired when a wallet is connected for the first time
- *   - checkout.created    fired when a new checkout link is created
- *   - checkout.paid       fired when a checkout is marked as paid
- *   - checkout.viewed     fired when a checkout page is opened
+ *   - user.signed_up           fired when a wallet is connected for the first time
+ *   - checkout.route.entered   fired when user navigates to /checkout or /checkout/create
+ *                              (Issue #119 — App Routing / CheckoutRoutesShell)
+ *   - checkout.created         fired when a new checkout link is created
+ *   - checkout.paid            fired when a checkout is marked as paid
+ *   - checkout.viewed          fired when a checkout page is opened
  *
  * Webhook endpoints are stored per-user in localStorage under WEBHOOK_KEY.
  * Each dispatch sends a POST request with a JSON body:
