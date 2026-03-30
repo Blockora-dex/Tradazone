@@ -22,6 +22,14 @@
  * Status: RESOLVED ✓
  * Description: Outdated versions of html2pdf.js (< 0.14.0) were vulnerable to XSS (CVE-2026-22787).
  * Resolution: Locked dependency to 0.14.0 and added explicit error handling for client-side generation.
+ *
+ * ISSUE: #107 (Sanitize InvoiceDetail text before rendering)
+ * Category: Security & Compliance
+ * Priority: Medium
+ * Affected Area: InvoiceDetail
+ * Description: Invoice/customer strings now pass through a defensive plain-text
+ * sanitizer before they are rendered or exported so hostile markup cannot leak
+ * into downstream surfaces such as PDF/CSV generation or future rich renderers.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -33,6 +41,7 @@ import { useData } from "../../context/DataContext";
 import { loadSession, useAuth } from "../../context/AuthContext";
 import { useDebounce } from "../../hooks/useDebounce";
 import { formatUtcDate } from "../../utils/date";
+import { getPlainTextFromRichText, normalizeRichTextHtml } from "../../utils/richText";
 
 function escapeCsvField(value) {
   const normalized = value == null ? "" : String(value);
@@ -68,6 +77,10 @@ function buildInvoiceCsv(invoice) {
   return rows.map((row) => row.map(escapeCsvField).join(",")).join("\n");
 }
 
+function sanitizeInvoiceText(value) {
+  return getPlainTextFromRichText(normalizeRichTextHtml(value || ""));
+}
+
 function InvoiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -78,6 +91,27 @@ function InvoiceDetail() {
 
   const invoice = invoices.find((inv) => inv.id === id);
   const customer = customers.find((c) => c.id === invoice?.customerId);
+  const sanitizedInvoice = useMemo(() => {
+    if (!invoice) return null;
+
+    return {
+      ...invoice,
+      id: sanitizeInvoiceText(invoice.id),
+      customer: sanitizeInvoiceText(invoice.customer),
+      items: invoice.items.map((item) => ({
+        ...item,
+        name: sanitizeInvoiceText(item.name),
+      })),
+    };
+  }, [invoice]);
+  const sanitizedCustomer = useMemo(() => {
+    if (!customer) return null;
+
+    return {
+      ...customer,
+      email: sanitizeInvoiceText(customer.email),
+    };
+  }, [customer]);
 
   // #21: bail out early if the session expired while the page was open
   useEffect(() => {
@@ -95,14 +129,14 @@ function InvoiceDetail() {
    * only triggers when the debounced value or the invoice data changes.
    */
   const filteredItems = useMemo(() => {
-    if (!invoice) return [];
-    if (!debouncedSearch.trim()) return invoice.items;
+    if (!sanitizedInvoice) return [];
+    if (!debouncedSearch.trim()) return sanitizedInvoice.items;
 
     const term = debouncedSearch.toLowerCase();
-    return invoice.items.filter((item) =>
+    return sanitizedInvoice.items.filter((item) =>
       item.name.toLowerCase().includes(term),
     );
-  }, [invoice, debouncedSearch]);
+  }, [sanitizedInvoice, debouncedSearch]);
 
   // html2pdf must be wrapped in try/catch — an orphaned `catch` breaks production builds.
   const handleDownload = async () => {
@@ -112,7 +146,7 @@ function InvoiceDetail() {
 
       const options = {
         margin: 0,
-        filename: `${invoice.id}.pdf`,
+        filename: `${sanitizedInvoice.id || "invoice"}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
@@ -126,14 +160,14 @@ function InvoiceDetail() {
   };
 
   const handleExportCsv = () => {
-    if (!invoice) return;
+    if (!sanitizedInvoice) return;
 
-    const csvContent = buildInvoiceCsv(invoice);
+    const csvContent = buildInvoiceCsv(sanitizedInvoice);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const downloadUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = downloadUrl;
-    link.download = `${invoice.id}.csv`;
+    link.download = `${sanitizedInvoice.id || "invoice"}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -142,7 +176,7 @@ function InvoiceDetail() {
 
   if (!invoice) return <div className="p-6">Invoice not found</div>;
 
-  const total = invoice.items.reduce(
+  const total = sanitizedInvoice.items.reduce(
     (acc, item) => acc + (parseFloat(item.price) || 0) * (Number(item.quantity) || 0),
     0
   );
@@ -151,12 +185,12 @@ function InvoiceDetail() {
     () => (
       <InvoiceLayout
         ref={pdfRef}
-        invoice={invoice}
-        customer={customer}
+        invoice={sanitizedInvoice}
+        customer={sanitizedCustomer}
         sender={user}
       />
     ),
-    [invoice, customer, user],
+    [sanitizedInvoice, sanitizedCustomer, user],
   );
 
   return (
@@ -171,16 +205,16 @@ function InvoiceDetail() {
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-semibold text-t-primary">
-              {invoice.id}
+              {sanitizedInvoice.id}
             </h1>
-            <StatusBadge status={invoice.status} />
+            <StatusBadge status={sanitizedInvoice.status} />
           </div>
         </div>
         <div className="flex gap-2">
           <Button
             variant="secondary"
             icon={Eye}
-            onClick={() => navigate(`/invoice/${invoice.id}`)}
+            onClick={() => navigate(`/invoice/${sanitizedInvoice.id}`)}
           >
             View Invoice
           </Button>
@@ -212,24 +246,24 @@ function InvoiceDetail() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             <div>
               <span className="block text-xs text-t-muted mb-1">Customer</span>
-              <span className="text-sm font-medium">{invoice.customer}</span>
+              <span className="text-sm font-medium">{sanitizedInvoice.customer}</span>
             </div>
             <div>
               <span className="block text-xs text-t-muted mb-1">Email</span>
               <span className="text-sm font-medium">
-                {customer?.email || "N/A"}
+                {sanitizedCustomer?.email || "N/A"}
               </span>
             </div>
             <div>
               <span className="block text-xs text-t-muted mb-1">Due Date</span>
               <span className="text-sm font-medium">
-                {formatUtcDate(invoice.dueDate)}
+                {formatUtcDate(sanitizedInvoice.dueDate)}
               </span>
             </div>
             <div>
               <span className="block text-xs text-t-muted mb-1">Created</span>
               <span className="text-sm font-medium">
-                {formatUtcDate(invoice.createdAt)}
+                {formatUtcDate(sanitizedInvoice.createdAt)}
               </span>
             </div>
           </div>

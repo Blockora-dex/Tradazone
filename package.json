@@ -68,7 +68,8 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "optimize:svg": "svgo -f src/assets --recursive",
+    "build": "npm run optimize:svg && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -116,6 +117,7 @@
     "jsdom": "^29.0.1",
     "postcss": "^8.5.6",
     "size-limit": "^11.1.6",
+    "svgo": "^4.0.1",
     "tailwindcss": "^3.4.19",
     "vite": "^8.0.3",
     "vitest": "^4.1.2"

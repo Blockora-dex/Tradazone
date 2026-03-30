@@ -7,9 +7,11 @@
  * Description: Implemented dark mode theme support for the customer management view.
  * Utilizes Tailwind 'dark:' variants to ensure high-contrast readability 
  * and production-grade UI standards in dark environments.
- * * ISSUE: #179 (Build size limits for CustomerList)
+ *
+ * ISSUE: #179 (Build size limits for CustomerList)
  * Category: DevOps & Infrastructure
  * Description: Implement production build size limits and monitoring.
+ *
  * ISSUE: #125 (Rich text descriptions for CustomerList)
  * Category: Feature Enhancement
  * Description: Added a rich text editor to capture customer descriptions
@@ -23,11 +25,30 @@
  * memoized. Applied React.memo to the component export, useMemo to the
  * filtered list, and useMemo to the columns definition so DataTable only
  * re-renders when its inputs actually change.
+ *
+ * ISSUE: #39 (Missing loading spinner during API delay in CustomerList)
+ * Category: UI/UX
+ * Priority: Medium
+ * Description:
+ * Previously, the CustomerList did not provide any visual feedback while
+ * awaiting asynchronous customer data. This caused a poor user experience,
+ * making the interface appear unresponsive or broken during API delays.
+ *
+ * Fix:
+ * - Introduced an `isLoading` state to track async data readiness.
+ * - Implemented a centered loading spinner using lucide-react's Loader2.
+ * - Ensured conditional rendering prioritizes loading state before empty state.
+ * - Prevented UI flicker by waiting for `customers !== undefined`.
+ * - Maintained existing architectural patterns and memoization strategy.
+ *
+ * Additional Improvement:
+ * - Fixed DataTable data source to use `filtered` instead of raw `customers`,
+ *   ensuring search functionality behaves correctly and consistently.
  */
 
 import { useEffect, useState, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Users } from "lucide-react";
+import { Plus, Search, Users, Loader2 } from "lucide-react";
 import DataTable from "../../components/tables/DataTable";
 import EmptyState from "../../components/ui/EmptyState";
 import RichTextEditor from "../../components/forms/RichTextEditor";
@@ -39,10 +60,29 @@ import { formatUtcDate } from "../../utils/date";
 const CustomerList = memo(function CustomerList() {
   const navigate = useNavigate();
   const { customers, updateCustomerDescription } = useData();
+
   const [query, setQuery] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
 
+  /**
+   * #39: loading state to track async data readiness
+   * Ensures UI communicates progress during API delays
+   */
+  const [isLoading, setIsLoading] = useState(true);
+
   const safeCustomers = customers ?? [];
+
+  /**
+   * #39: resolve loading state when customers data is available
+   * We specifically check for undefined to distinguish between:
+   * - "still loading" (undefined)
+   * - "loaded but empty" ([])
+   */
+  useEffect(() => {
+    if (customers !== undefined) {
+      setIsLoading(false);
+    }
+  }, [customers]);
 
   // #77: memoize filtered list — only recomputes when query or customers change.
   const filtered = useMemo(
@@ -67,8 +107,7 @@ const CustomerList = memo(function CustomerList() {
     safeCustomers.find((customer) => customer.id === selectedCustomerId) ||
     safeCustomers[0];
 
-  // #77: memoize columns — definition is static; recreating it every render
-  // causes DataTable to see new prop references and re-render unnecessarily.
+  // #77: memoize columns — prevents unnecessary DataTable re-renders
   const columns = useMemo(
     () => [
       { key: "name", header: "Name" },
@@ -104,7 +143,15 @@ const CustomerList = memo(function CustomerList() {
         </button>
       </div>
 
-      {safeCustomers.length === 0 ? (
+      {/* #201: LOADING STATE — highest priority render branch */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-3 text-t-muted dark:text-zinc-400">
+            <Loader2 className="animate-spin" size={28} />
+            <span className="text-sm">Loading customers...</span>
+          </div>
+        </div>
+      ) : safeCustomers.length === 0 ? (
         <EmptyState
           icon={Users}
           title="No customers yet"
@@ -114,7 +161,7 @@ const CustomerList = memo(function CustomerList() {
         />
       ) : (
         <>
-          {/* SEARCH BAR: Added dark mode background, border, and text colors */}
+          {/* SEARCH BAR: dark mode supported */}
           <div className="flex items-center gap-3 mb-5 px-4 py-2.5 bg-white border border-border rounded-lg dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
             <Search size={18} className="text-t-muted dark:text-zinc-500" />
             <input
@@ -126,6 +173,7 @@ const CustomerList = memo(function CustomerList() {
             />
           </div>
 
+          {/* CUSTOMER DESCRIPTION PANEL */}
           <div className="mb-6 rounded-xl border border-border bg-white p-4 shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -136,6 +184,7 @@ const CustomerList = memo(function CustomerList() {
                   Keep rich notes for proposals, preferences, and onboarding context.
                 </p>
               </div>
+
               <div className="w-full lg:w-64">
                 <label className="text-xs font-medium text-t-secondary uppercase tracking-wide">
                   Active customer
@@ -167,10 +216,11 @@ const CustomerList = memo(function CustomerList() {
               />
             </div>
           </div>
-          
+
+          {/* DATA TABLE */}
           <DataTable
             dataType="customers"
-            data={customers}
+            data={filtered} // #39 FIX: ensures search filtering is respected
             columns={columns}
             enableFilters={true}
             onRowClick={(customer) =>

@@ -11,6 +11,7 @@
  *
  * Issue #38 — Missing accessible names on route loading surfaces (App Routing).
  * Issue #141 — Lack of visual snapshot testing for the App Routing components.
+ * Issue #146 — Zero unit tests coverage found for the critical logic in App Routing.
  * Category: Testing / App Routing / UI/UX / accessibility
  * Affected: Suspense fallbacks while lazy chunks load (`/pay/:checkoutId`, checkout
  * routes) and the root Suspense fallback (`LoadingSpinner`).
@@ -111,8 +112,12 @@ function App() {
               <Route path="customers" element={<CustomerList />} />
               <Route path="customers/add" element={<AddCustomer />} />
               <Route path="customers/:id" element={<CustomerDetail />} />
-              {/* Checkout routes — wrapped in Suspense so the lazy chunks
-                  resolve gracefully while the user navigates */}
+              <Route path="invoices" element={<InvoiceList />} />
+              <Route path="invoices/create" element={<CreateInvoice />} />
+              <Route path="invoices/:id" element={<InvoiceDetail />} />
+              <Route path="items" element={<ItemsList />} />
+              <Route path="items/add" element={<AddItem />} />
+              <Route path="items/:id" element={<ItemDetail />} />
               <Route
                 element={
                   <Suspense
@@ -135,12 +140,6 @@ function App() {
                 <Route path="checkout/create" element={<CreateCheckout />} />
                 <Route path="checkout/:id" element={<CheckoutDetail />} />
               </Route>
-              <Route path="invoices" element={<InvoiceList />} />
-              <Route path="invoices/create" element={<CreateInvoice />} />
-              <Route path="invoices/:id" element={<InvoiceDetail />} />
-              <Route path="items" element={<ItemsList />} />
-              <Route path="items/add" element={<AddItem />} />
-              <Route path="items/:id" element={<ItemDetail />} />
               <Route path="settings" element={<Settings />}>
                 <Route path="profile" element={<ProfileSettings />} />
                 <Route path="payments" element={<PaymentSettings />} />

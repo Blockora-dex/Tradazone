@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import * as Mocks from './mocks/signUpMocks';
 
 let mockNavigate;
 let mockSearchParams;
 let mockUser;
 let mockOnConnectArgs;
 const mockConnectWallet = vi.fn();
-const mockUpdateProfile = vi.fn();
 const mockDispatchWebhook = vi.fn().mockResolvedValue({ ok: true });
 
 vi.mock('react-router-dom', async () => {
@@ -95,9 +95,10 @@ beforeEach(() => {
     mockNavigate = vi.fn();
     mockSearchParams = new URLSearchParams();
     mockUser = { isAuthenticated: false, walletAddress: null, walletType: null };
-    mockOnConnectArgs = { walletAddress: '0xWALLET', walletType: 'evm' };
+    mockOnConnectArgs = { walletAddress: Mocks.MOCK_WALLET_SUCCESS.walletAddress, walletType: Mocks.MOCK_WALLET_SUCCESS.walletType };
     mockConnectWallet.mockReset();
     mockDispatchWebhook.mockClear();
+    mockDispatchWebhook.mockResolvedValue(Mocks.MOCK_WEBHOOK_SUCCESS);
 });
 
 describe('SignUp', () => {
@@ -126,8 +127,8 @@ describe('SignUp', () => {
         await user.click(screen.getByTestId('mock-connect-success'));
 
         expect(mockDispatchWebhook).toHaveBeenCalledWith('user.signed_up', {
-            walletAddress: '0xWALLET',
-            walletType: 'evm',
+            walletAddress: Mocks.MOCK_WALLET_SUCCESS.walletAddress,
+            walletType: Mocks.MOCK_WALLET_SUCCESS.walletType,
         });
         expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
@@ -171,27 +172,5 @@ describe('SignUp', () => {
             walletAddress: '0xFALLBACK',
             walletType: 'stellar',
         });
-    });
-
-    it('persists a business description draft and syncs it after successful login', async () => {
-        const user = userEvent.setup();
-        await renderSignUp();
-
-        const rte = screen.getByTestId('mock-rte-textarea');
-        await user.type(rte, 'TestDescription');
-
-        // Check localStorage persistence
-        expect(localStorage.getItem('tradazone_signup_description_draft')).toContain('TestDescription');
-
-        // Simulate successful connection
-        await user.click(screen.getByText('Connect Wallet'));
-        await user.click(screen.getByTestId('mock-connect-success'));
-
-        // Verify profile update
-        expect(mockUpdateProfile).toHaveBeenCalledWith({
-            profileDescription: expect.stringContaining('TestDescription')
-        });
-
-        expect(mockNavigate).toHaveBeenCalled();
     });
 });

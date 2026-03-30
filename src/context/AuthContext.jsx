@@ -118,6 +118,14 @@
  * It is a UI concern independent of authentication. See
  * `src/context/ThemeContext.jsx` and {@link useTheme} for theme state.
  *
+ * ISSUE: #106 (Missing CSP baseline for AuthContext)
+ * Category: Security & Compliance
+ * Priority: Low
+ * Affected Area: AuthContext
+ * Description: Auth-related routes now enforce a centralized Content Security
+ * Policy baseline through the shared app shell (`index.html`) and a runtime
+ * meta sync helper so auth screens are protected even during SPA navigation.
+ *
  * @module AuthContext
  */
 
@@ -127,6 +135,7 @@ import { createContext, useContext, useState, useEffect, useMemo, useCallback } 
 import { STORAGE_PREFIX, SESSION_TTL_MS, ALLOW_MOCK_WALLET } from '../config/env';
 import { useDiscoveredProviders } from '../utils/wallet-discovery';
 import { normalizeRichTextHtml } from '../utils/richText';
+import { ensureContentSecurityPolicyMeta } from '../security/csp';
 
 const AuthContext = createContext(null);
 const AuthUserContext = createContext(null);
@@ -515,6 +524,10 @@ export function AuthProvider({ children }) {
         base: false,
         discovered: [],
     });
+
+    useEffect(() => {
+        ensureContentSecurityPolicyMeta();
+    }, []);
 
     useEffect(() => {
         /**

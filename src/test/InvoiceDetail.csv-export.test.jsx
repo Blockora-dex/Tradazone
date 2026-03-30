@@ -95,4 +95,44 @@ describe('InvoiceDetail CSV export', () => {
 
         expect(revokeObjectURL).toHaveBeenCalledWith('blob:invoice-csv');
     });
+
+    it('sanitizes invoice text before rendering and exporting', async () => {
+        const user = userEvent.setup();
+        mockUseData.mockReturnValue({
+            invoices: [
+                {
+                    id: 'INV-<script>alert(1)</script>-001',
+                    customer: 'Acme <img src=x onerror=alert(1)> Corp',
+                    customerId: 'cust-2',
+                    status: 'pending',
+                    dueDate: '2026-03-30T00:00:00.000Z',
+                    createdAt: '2026-03-01T00:00:00.000Z',
+                    items: [
+                        { name: 'Website <script>alert(1)</script> Audit', quantity: 1, price: '50' },
+                    ],
+                },
+            ],
+            customers: [
+                { id: 'cust-2', email: 'billing<script>@acme.test' },
+            ],
+        });
+
+        renderInvoiceDetail(encodeURIComponent('INV-<script>alert(1)</script>-001'));
+
+        expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('INV--001');
+        expect(screen.getAllByText('Acme Corp').length).toBeGreaterThan(0);
+        expect(screen.getAllByText((content) => content.includes('billing')).length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Website Audit').length).toBeGreaterThan(0);
+        expect(document.querySelector('script')).toBeNull();
+
+        await user.click(screen.getByRole('button', { name: /export to csv/i }));
+
+        const csvBlob = createObjectURL.mock.calls[0][0];
+        const csvText = await csvBlob.text();
+        expect(csvText).toContain('Invoice ID,INV--001');
+        expect(csvText).toContain('Customer,Acme Corp');
+        expect(csvText).toContain('Website Audit,1,50,50');
+        expect(csvText).not.toContain('<script>');
+        expect(csvText).not.toContain('onerror');
+    });
 });
