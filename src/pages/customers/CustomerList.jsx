@@ -1,6 +1,14 @@
 /**
  * @fileoverview CustomerList — customer management page.
  *
+ * ISSUE: #162 (Visual snapshot testing for CustomerList)
+ * Category: Testing & QA
+ * Priority: Critical
+ * Affected Area: CustomerList
+ * Description: Regression guard for this page’s DOM structure and copy across
+ * loading, empty, and populated states. Snapshots live next to
+ * `src/test/CustomerList.snapshot.test.tsx`.
+ *
  * ISSUE: #134 (Support dark mode themes in CustomerList)
  * Category: Feature Enhancement
  * Affected Area: CustomerList
