@@ -24,11 +24,8 @@ function LoadingSpinner() {
             aria-busy="true"
         >
             <div className="flex flex-col items-center gap-4">
-                <span
-                    className="w-10 h-10 border-4 border-brand/20 border-t-brand rounded-full animate-spin"
-                    aria-hidden="true"
-                />
-                <p className="text-sm font-medium text-t-muted animate-pulse">Loading Tradazone...</p>
+                <span className="w-12 h-12 border-4 border-coin-gray border-t-brand rounded-full animate-spin-ring" aria-hidden="true" />
+                <p className="text-[15px] font-medium text-t-secondary animate-pulse">Loading Tradazone...</p>
             </div>
         </div>
     );
