@@ -57,7 +57,7 @@ jobs:
             console.log('  Performance-related tests: ' + perfTests.length);
           "
           
-          AFFECTED_TESTS=$(node -e "const Utils = require('./scripts/ci-pipeline-utils.js'); const utils = new Utils(); const all = utils.discoverTestFiles(); const ch = utils.getChanged Files('main'); const aff = utils.filterByChangedFiles(all, ch); console.log(aff.join(' '))")
+          AFFECTED_TESTS=$(node -e "const Utils = require('./scripts/ci-pipeline-utils.js'); const utils = new Utils(); const all = utils.discoverTestFiles(); const ch = utils.getChangedFiles('main'); const aff = utils.filterByChangedFiles(all, ch); console.log(aff.join(' '))")
           echo "affected-tests=${AFFECTED_TESTS}" >> $GITHUB_OUTPUT
 
   size-check:

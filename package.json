@@ -82,7 +82,7 @@
     "size": "size-limit",
     "build:size": "npm run build && npm run size",
     "ci:discover": "node scripts/ci-pipeline-utils.js discover",
-    "ci:select": "node scripts/ci-pipeline-utils.js smart-select main --verbose",
+    "ci:select": "node scripts/ci-pipeline-utils.js smart-select main",
     "ci:filter": "node scripts/ci-pipeline-utils.js filter",
     "ci:sort": "node scripts/ci-pipeline-utils.js sort",
     "ci:report": "node scripts/ci-pipeline-utils.js report markdown",
