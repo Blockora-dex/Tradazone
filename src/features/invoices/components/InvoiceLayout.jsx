@@ -3,14 +3,19 @@ import InvoiceHeader from './InvoiceHeader';
 import InvoiceTable from './InvoiceTable';
 import InvoiceSummary from './InvoiceSummary';
 import InvoiceFooter from './InvoiceFooter';
+import { getCurrencyPreference } from '../../../utils/currencyPreference';
 
 const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sender }, ref) {
+    const displayCurrency = getCurrencyPreference();
+
     const subtotal = invoice.items.reduce(
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
         0
     );
-    const tax = subtotal; // placeholder – same as ref image
+    const tax   = subtotal; // placeholder
     const total = subtotal;
+
+    const paymentLink = `${import.meta.env.BASE_URL}pay/invoice/${invoice.id}`;
 
     return (
         <div
@@ -21,7 +26,7 @@ const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sen
             {/* Header */}
             <InvoiceHeader />
 
-            {/* Invoice Meta: Date, Due Date, Invoice Number */}
+            {/* Invoice Meta */}
             <div className="grid grid-cols-3 border-t border-gray-200 py-4 mb-6">
                 <div>
                     <span className="block text-xs font-bold text-t-primary mb-1">Invoice date:</span>
@@ -37,7 +42,7 @@ const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sen
                 </div>
             </div>
 
-            {/* Billing: From, To, Address */}
+            {/* Billing */}
             <div className="grid grid-cols-3 border-t border-gray-200 py-4 mb-8">
                 <div>
                     <span className="block text-xs font-bold text-t-primary mb-1">From:</span>
@@ -58,21 +63,21 @@ const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sen
             </div>
 
             {/* Items Table */}
-            <InvoiceTable items={invoice.items} currency={invoice.currency} />
+            <InvoiceTable items={invoice.items} currency={displayCurrency} />
 
             {/* Summary */}
             <InvoiceSummary
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
-                currency={invoice.currency}
+                currency={displayCurrency}
             />
 
             {/* Footer */}
             <div className="mt-auto">
                 <InvoiceFooter
                     notes={sender?.name || 'Sender'}
-                    paymentLink={`https://pay.tradazone.com/${invoice.id}`}
+                    paymentLink={paymentLink}
                 />
             </div>
         </div>

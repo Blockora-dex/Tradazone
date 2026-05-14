@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle, ChevronDown, AlertCircle, Download } from 'lucide-react';
-import { useCheckoutData } from '../../../context/DataContext';
+import { useData } from '../../../context/DataContext';
 import { useAuth } from '../../../context/AuthContext';
 import { priceService } from '../../../services/priceService';
 import { generateReceipt } from '../../../utils/generateReceipt';
@@ -26,13 +26,18 @@ const COUNTRIES = [
     'Ghana', 'Kenya', 'Egypt', 'Other',
 ];
 
+// Fallback merchant receiving addresses.
+// In production these come from invoice.paymentAddress (set by the merchant's wallet).
 const FALLBACK_MERCHANT_WALLETS = {
     STRK: '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     ETH:  '0x1234567890123456789012345678901234567890',
     XLM:  'GABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABC',
 };
 
+// STRK ERC-20 contract on Starknet mainnet
 const STRK_TOKEN_ADDRESS = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d';
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function truncate(addr = '', head = 8, tail = 6) {
     if (addr.length <= head + tail + 3) return addr;
@@ -41,24 +46,24 @@ function truncate(addr = '', head = 8, tail = 6) {
 
 // ─── Success screen ───────────────────────────────────────────────────────────
 
-function SuccessScreen({ checkout, cryptoAmount, selectedCrypto, txHash, network, email, fiatAmount, fiatCurrency }) {
+function SuccessScreen({ invoice, customer, cryptoAmount, selectedCrypto, txHash, network, email, fiatAmount, fiatCurrency }) {
     const [downloading, setDownloading] = useState(false);
 
     const handleDownload = async () => {
         setDownloading(true);
         try {
             await generateReceipt({
-                id:             checkout.id,
-                merchantName:   'Tradazone',
-                customerEmail:  email,
-                items:          [{ name: checkout.title, quantity: 1, price: `${checkout.amount} ${checkout.currency}` }],
+                id:             invoice.id,
+                merchantName:   invoice.customer,
+                customerEmail:  email || customer?.email,
+                items:          invoice.items || [],
                 fiatAmount,
                 fiatCurrency,
                 cryptoAmount,
                 selectedCrypto,
                 txHash,
                 network,
-                paidAt:         new Date().toISOString(),
+                paidAt:         invoice.paidAt || new Date().toISOString(),
             });
         } finally {
             setDownloading(false);
@@ -103,24 +108,38 @@ function SuccessScreen({ checkout, cryptoAmount, selectedCrypto, txHash, network
     );
 }
 
+// ─── Not-found screen ─────────────────────────────────────────────────────────
+
+function NotFoundScreen() {
+    return (
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            <header className="bg-brand py-4 flex items-center justify-center">
+                <Logo variant="dark" className="h-7" />
+            </header>
+            <div className="flex-1 flex items-center justify-center p-6">
+                <div className="bg-white border border-border rounded-card p-10 text-center max-w-md w-full shadow-sm">
+                    <h2 className="text-xl font-bold text-t-primary mb-2">Invoice Not Found</h2>
+                    <p className="text-t-muted text-sm">
+                        This payment link is invalid or the invoice has been removed.
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
-function MailCheckout() {
-    const { checkoutId } = useParams();
-    const { checkouts, markCheckoutPaid } = useCheckoutData();
+function InvoiceCheckout() {
+    const { invoiceId } = useParams();
+    const { invoices, customers, markInvoicePaid } = useData();
     const { connectWallet, wallet } = useAuth();
 
-    // Fallback demo data so the page works even without a matching checkout in localStorage
-    const checkout = checkouts.find(c => c.id === checkoutId) || {
-        id:          checkoutId || 'demo',
-        title:       'Premium Package',
-        description: 'Full service payment',
-        amount:      '200',
-        currency:    'STRK',
-    };
+    const invoice  = invoices.find(inv => inv.id === invoiceId);
+    const customer = customers.find(c => c.id === invoice?.customerId);
 
     // ── Form state
-    const [email,   setEmail]   = useState('');
+    const [email,   setEmail]   = useState(customer?.email || '');
     const [country, setCountry] = useState('United States');
 
     // ── Pricing state
@@ -128,25 +147,33 @@ function MailCheckout() {
     const [displayFiat,    setDisplayFiat]    = useState('USD');
     const [cryptoAmount,   setCryptoAmount]   = useState('');
     const [displayAmount,  setDisplayAmount]  = useState('');
-    const [loadingRate,    setLoadingRate]    = useState(true);
+    const [loadingRate,    setLoadingRate]     = useState(true);
 
     // ── Payment state
     const [walletModalOpen, setWalletModalOpen] = useState(false);
-    const [paymentStatus,   setPaymentStatus]  = useState('idle');
-    const [txHash,          setTxHash]         = useState('');
-    const [txNetwork,       setTxNetwork]      = useState('');
-    const [errorMsg,        setErrorMsg]       = useState('');
+    const [paymentStatus,   setPaymentStatus]   = useState('idle'); // idle | processing | success | error
+    const [txHash,          setTxHash]          = useState('');
+    const [errorMsg,        setErrorMsg]        = useState('');
 
-    // Treat checkout amount as a USD base value
-    const baseAmountUSD = parseFloat(checkout.amount || '0') || 0;
-    const fiatInfo      = FIAT_OPTIONS.find(f => f.code === displayFiat) || FIAT_OPTIONS[0];
-    const walletConnected       = wallet?.isConnected;
+    // Treat invoice amount as the base USD value
+    const baseAmountUSD = parseFloat((invoice?.amount || '0').replace(/,/g, '')) || 0;
+    const fiatInfo = FIAT_OPTIONS.find(f => f.code === displayFiat) || FIAT_OPTIONS[0];
+
+    const walletConnected = wallet?.isConnected;
+
+    // Warn if connected wallet currency doesn't match selected crypto
     const walletCurrencyMismatch = walletConnected && wallet.currency !== selectedCrypto;
-    const merchantAddress = FALLBACK_MERCHANT_WALLETS[selectedCrypto];
+
+    // Merchant receiving address — prefer address stored on the invoice
+    const merchantAddress =
+        invoice?.paymentAddress ||
+        FALLBACK_MERCHANT_WALLETS[selectedCrypto];
 
     // ── Live rate conversion ──────────────────────────────────────────────────
     useEffect(() => {
+        if (!invoice) return;
         let cancelled = false;
+
         setLoadingRate(true);
 
         Promise.all([
@@ -162,7 +189,7 @@ function MailCheckout() {
         });
 
         return () => { cancelled = true; };
-    }, [selectedCrypto, displayFiat, baseAmountUSD]);
+    }, [selectedCrypto, displayFiat, baseAmountUSD, invoice]);
 
     // ── Payment execution ─────────────────────────────────────────────────────
     const handleConfirmPayment = async () => {
@@ -171,22 +198,24 @@ function MailCheckout() {
         setErrorMsg('');
 
         try {
-            let hash    = '';
-            let netName = selectedCrypto;
+            let hash = '';
 
             if (selectedCrypto === 'STRK') {
                 const starknet = window.starknet_argentX || window.starknet;
-                if (!starknet?.account) throw new Error('Starknet wallet not connected. Please reconnect.');
+                if (!starknet?.account) {
+                    throw new Error('Starknet wallet not connected. Please reconnect your wallet.');
+                }
+                // STRK is an ERC-20 — call transfer on the token contract
                 const amountBN = BigInt(Math.round(parseFloat(cryptoAmount) * 1e18));
                 const low  = (amountBN & BigInt('0xffffffffffffffffffffffffffffffff')).toString();
                 const high = (amountBN >> BigInt(128)).toString();
+
                 const result = await starknet.account.execute([{
                     contractAddress: STRK_TOKEN_ADDRESS,
-                    entrypoint:      'transfer',
-                    calldata:        [merchantAddress, low, high],
+                    entrypoint: 'transfer',
+                    calldata: [merchantAddress, low, high],
                 }]);
-                hash    = result.transaction_hash;
-                netName = 'Starknet';
+                hash = result.transaction_hash;
 
             } else if (selectedCrypto === 'ETH') {
                 const { BrowserProvider, parseEther } = await import('ethers');
@@ -197,8 +226,7 @@ function MailCheckout() {
                     value: parseEther(cryptoAmount),
                 });
                 await tx.wait(1);
-                hash    = tx.hash;
-                netName = 'Ethereum';
+                hash = tx.hash;
 
             } else if (selectedCrypto === 'XLM') {
                 const [StellarSdk, lobstrApi] = await Promise.all([
@@ -208,8 +236,9 @@ function MailCheckout() {
                 const { Horizon, TransactionBuilder, Operation, Asset, Networks, BASE_FEE } = StellarSdk;
                 const server  = new Horizon.Server('https://horizon.stellar.org');
                 const account = await server.loadAccount(wallet.address);
+
                 const tx = new TransactionBuilder(account, {
-                    fee:              BASE_FEE,
+                    fee: BASE_FEE,
                     networkPassphrase: Networks.PUBLIC,
                 })
                     .addOperation(Operation.payment({
@@ -219,16 +248,22 @@ function MailCheckout() {
                     }))
                     .setTimeout(30)
                     .build();
-                const signed   = await lobstrApi.signTransaction(tx.toXDR());
+
+                const xdr      = tx.toXDR();
+                const signed   = await lobstrApi.signTransaction(xdr);
                 const signedTx = TransactionBuilder.fromXDR(signed.signedXDR, Networks.PUBLIC);
                 const submit   = await server.submitTransaction(signedTx);
-                hash    = submit.hash;
-                netName = 'Stellar';
+                hash = submit.hash;
             }
 
-            markCheckoutPaid(checkout.id, null, selectedCrypto);
+            markInvoicePaid(invoiceId, {
+                hash,
+                network:  selectedCrypto === 'ETH' ? 'evm' : selectedCrypto === 'STRK' ? 'starknet' : 'stellar',
+                amount:   cryptoAmount,
+                currency: selectedCrypto,
+            });
+
             setTxHash(hash);
-            setTxNetwork(netName);
             setPaymentStatus('success');
 
         } catch (err) {
@@ -238,25 +273,35 @@ function MailCheckout() {
         }
     };
 
-    // ── Early return — already paid ───────────────────────────────────────────
-    if (paymentStatus === 'success' || checkout.status === 'paid') {
+    // ── Early returns ─────────────────────────────────────────────────────────
+    if (!invoice) return <NotFoundScreen />;
+
+    if (paymentStatus === 'success' || invoice.status === 'paid') {
         return (
             <SuccessScreen
-                checkout={checkout}
+                invoice={invoice}
+                customer={customer}
                 cryptoAmount={cryptoAmount}
                 selectedCrypto={selectedCrypto}
                 txHash={txHash}
-                network={txNetwork}
+                network={selectedCrypto === 'ETH' ? 'Ethereum' : selectedCrypto === 'STRK' ? 'Starknet' : 'Stellar'}
                 email={email}
-                fiatAmount={displayAmount}
+                fiatAmount={baseAmountUSD}
                 fiatCurrency={displayFiat}
             />
         );
     }
 
+    // Derived display values
+    const merchantName = invoice.customer || 'Merchant';
+    const itemName     = invoice.items?.[0]?.name || 'Invoice Payment';
+    const itemSummary  = invoice.items
+        ?.map(item => `${item.name}${item.quantity > 1 ? ` × ${item.quantity}` : ''}`)
+        .join(', ') || '';
+
     const confirmDisabled =
-        !walletConnected         ||
-        !email                   ||
+        !walletConnected ||
+        !email           ||
         paymentStatus === 'processing' ||
         loadingRate;
 
@@ -274,12 +319,12 @@ function MailCheckout() {
 
                     {/* ── Title / price bar ── */}
                     <div className="bg-white border border-border border-b-0 px-5 py-4 flex items-center justify-between">
-                        <h1 className="text-base font-semibold text-t-primary">{checkout.title}</h1>
+                        <h1 className="text-base font-semibold text-t-primary">{itemName}</h1>
 
                         <div className="flex items-center gap-2.5">
                             <span className="text-sm text-t-muted">Price</span>
 
-                            {/* Fiat selector */}
+                            {/* Fiat currency selector */}
                             <div className="relative">
                                 <select
                                     value={displayFiat}
@@ -306,29 +351,34 @@ function MailCheckout() {
                     {/* ── Main card ── */}
                     <div className="bg-white border border-border shadow-sm flex flex-col md:flex-row min-h-[380px]">
 
-                        {/* ── LEFT: checkout info ── */}
+                        {/* ── LEFT: merchant & item info ── */}
                         <div className="md:w-[44%] border-b md:border-b-0 md:border-r border-border flex flex-col">
 
-                            {/* Title row */}
+                            {/* Merchant row */}
                             <div className="flex border-b border-border">
+                                {/* Avatar + name */}
                                 <div className="flex items-center gap-2.5 px-4 py-3 border-r border-border shrink-0">
-                                    <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
-                                        <span className="text-sm font-bold text-brand select-none">T</span>
+                                    <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                        <span className="text-sm font-bold text-brand uppercase select-none">
+                                            {merchantName.charAt(0)}
+                                        </span>
                                     </div>
-                                    <span className="text-sm font-medium text-t-primary whitespace-nowrap">Tradazone</span>
+                                    <span className="text-sm font-medium text-t-primary whitespace-nowrap">
+                                        {merchantName}
+                                    </span>
                                 </div>
+
+                                {/* Item label */}
                                 <div className="flex items-center px-4 py-3 overflow-hidden">
-                                    <span className="text-sm text-t-muted truncate">{checkout.title}</span>
+                                    <span className="text-sm text-t-muted truncate">{itemName}</span>
                                 </div>
                             </div>
 
                             {/* Description */}
                             <div className="p-5 flex-1 flex flex-col justify-between">
-                                <p className="text-sm text-t-secondary leading-relaxed">
-                                    {checkout.description}
-                                </p>
+                                <p className="text-sm text-t-secondary leading-relaxed">{itemSummary}</p>
 
-                                {/* Amount summary */}
+                                {/* Fiat + crypto summary */}
                                 <div className="mt-5 pt-4 border-t border-border space-y-1.5">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-t-muted">Amount due</span>
@@ -382,7 +432,7 @@ function MailCheckout() {
                                 </div>
                             </div>
 
-                            {/* Crypto selector — above Pay with */}
+                            {/* Crypto selector — above "Pay with" */}
                             <div>
                                 <label className="block text-sm text-t-secondary mb-1.5">
                                     Select cryptocurrency
@@ -401,14 +451,17 @@ function MailCheckout() {
                                 </div>
                             </div>
 
-                            {/* Pay with */}
+                            {/* Pay with / wallet */}
                             <div>
                                 <label className="block text-sm text-t-secondary mb-1.5">
                                     Pay with
                                 </label>
+
                                 {walletConnected ? (
                                     <div className="border border-green-200 bg-green-50 rounded px-3 py-2.5 flex items-center justify-between">
-                                        <span className="text-sm font-medium text-green-700">Wallet connected</span>
+                                        <span className="text-sm font-medium text-green-700">
+                                            Wallet connected
+                                        </span>
                                         <span className="text-xs font-mono text-green-600">
                                             {truncate(wallet.address)}
                                         </span>
@@ -422,15 +475,16 @@ function MailCheckout() {
                                     </button>
                                 )}
 
+                                {/* Wallet/crypto mismatch hint */}
                                 {walletCurrencyMismatch && (
                                     <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
                                         <AlertCircle size={12} className="shrink-0" />
-                                        Your wallet uses {wallet.currency}. Switch to {selectedCrypto} or change your selection.
+                                        Your connected wallet uses {wallet.currency}. Switch to {selectedCrypto} or change your selection.
                                     </p>
                                 )}
                             </div>
 
-                            {/* Error */}
+                            {/* Error message */}
                             {paymentStatus === 'error' && errorMsg && (
                                 <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2.5">
                                     <AlertCircle size={15} className="shrink-0 mt-0.5" />
@@ -469,4 +523,4 @@ function MailCheckout() {
     );
 }
 
-export default MailCheckout;
+export default InvoiceCheckout;

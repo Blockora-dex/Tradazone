@@ -24,11 +24,13 @@ function SendInvoiceModal({ isOpen, onClose, invoice, customer }) {
         setErrorMsg('');
 
         try {
+            const paymentLink = `${window.location.origin}/pay/invoice/${invoice.id}`;
             const result = await sendInvoiceToCustomer({
                 ...invoice,
                 customerEmail: customerEmail.trim(),
                 customer: customer?.name || invoice.customer,
                 senderName: 'Tradazone',
+                paymentLink,
             });
 
             if (result.success) {

@@ -4,15 +4,17 @@ import DataTable from '../../../components/tables/DataTable';
 import StatusBadge from '../../../components/tables/StatusBadge';
 import EmptyState from '../../../components/ui/EmptyState';
 import { useData } from '../../../context/DataContext';
+import { formatPrice, useCurrencyPreference } from '../../../utils/currencyPreference';
 
 function CheckoutList() {
     const navigate = useNavigate();
     const { checkouts } = useData();
+    const displayCurrency = useCurrencyPreference();
 
     const columns = [
         { key: 'id', header: 'ID' },
         { key: 'title', header: 'Title' },
-        { key: 'amount', header: 'Amount', render: (value, row) => `${value} ${row.currency}` },
+        { key: 'amount', header: 'Amount', render: (value) => formatPrice(value, displayCurrency) },
         { key: 'status', header: 'Status', render: (value) => <StatusBadge status={value} /> },
         { key: 'views', header: 'Views' },
         { key: 'payments', header: 'Payments' },

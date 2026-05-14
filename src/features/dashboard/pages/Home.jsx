@@ -1,6 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Wallet,
     TrendingUp,
     ArrowDownRight,
     FileText,
@@ -8,70 +8,117 @@ import {
     ShoppingCart,
     Package,
     Zap,
-    ChevronDown
+    ChevronDown,
+    ArrowUpRight,
 } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
 import { useData } from '../../../context/DataContext';
 import WelcomeModal from '../../../components/ui/WelcomeModal';
+import { formatPrice, useCurrencyPreference } from '../../../utils/currencyPreference';
+
+// ── Filter helpers ────────────────────────────────────────────────────────────
+
+const FILTERS = [
+    { label: 'Last week',  key: 'week'  },
+    { label: 'Last month', key: 'month' },
+    { label: 'Last year',  key: 'year'  },
+];
+
+function getStartDate(key) {
+    const now = new Date();
+    if (key === 'week')  { const d = new Date(now); d.setDate(d.getDate() - 7);   return d; }
+    if (key === 'month') { const d = new Date(now); d.setMonth(d.getMonth() - 1); return d; }
+    if (key === 'year')  { const d = new Date(now); d.setFullYear(d.getFullYear() - 1); return d; }
+    return new Date(0);
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 function Home() {
-    const { user, wallet, connectWallet } = useAuth();
     const { invoices = [] } = useData();
+    const displayCurrency    = useCurrencyPreference();
+    const [txFilter, setTxFilter] = useState('month');
 
-    // Calculate dashboard stats
+    // All paid invoices
+    const paidInvoices = invoices.filter(inv => inv.status === 'paid');
+
+    // Total transactions filtered by period
+    const filterStart = getStartDate(txFilter);
+    const filteredTotal = paidInvoices
+        .filter(inv => {
+            const d = inv.paidAt ? new Date(inv.paidAt) : null;
+            return d && d >= filterStart;
+        })
+        .reduce((sum, inv) => sum + parseFloat((inv.amount || '0').replace(/,/g, '')), 0);
+
+    const totalAllTime = paidInvoices
+        .reduce((sum, inv) => sum + parseFloat((inv.amount || '0').replace(/,/g, '')), 0);
+
+    // Unpaid receivables (all time)
     const receivables = invoices
         .filter(inv => inv.status !== 'paid')
         .reduce((sum, inv) => sum + parseFloat((inv.amount || '0').replace(/,/g, '')), 0);
-        
-    const dashboardStats = {
-        walletBalance: wallet.balance || '0',
-        receivables: receivables.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-    };
-    
-    // Calculate transactions from paid invoices
-    const transactions = invoices
-        .filter(inv => inv.status === 'paid')
-        .map(inv => ({
-            id: inv.id,
-            description: `Payment from ${inv.customer}`,
-            date: inv.paidAt ? new Date(inv.paidAt).toLocaleDateString() : 'Unknown',
-            amount: inv.amount,
-            customer: inv.customer
-        }))
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    const recentTransactions = transactions.slice(0, 5);
+    // Recent transactions for the feed
+    const recentTransactions = paidInvoices
+        .map(inv => ({
+            id:          inv.id,
+            description: `Payment from ${inv.customer}`,
+            date:        inv.paidAt ? new Date(inv.paidAt).toLocaleDateString() : 'Unknown',
+            rawDate:     inv.paidAt || '',
+            amount:      inv.amount,
+            customer:    inv.customer,
+        }))
+        .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate))
+        .slice(0, 5);
+
+    const activeFilterLabel = FILTERS.find(f => f.key === txFilter)?.label || 'Last month';
 
     return (
         <div className="max-w-[1100px]">
             <WelcomeModal />
 
-            {/* Page Heading */}
             <h1 className="text-xl font-medium text-t-primary mb-6">
                 Welcome to Tradazone
             </h1>
 
-            {/* ── Top Row: Wallet + Receivable ── */}
+            {/* ── Top Row ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Wallet Balance Card */}
+
+                {/* Total Transactions Card */}
                 <div className="bg-brand rounded-card p-6 text-white flex flex-col min-h-[192px]">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="w-8 h-8 bg-accent-orange/80 rounded-full flex items-center justify-center">
-                            <Wallet size={15} strokeWidth={2} />
+                    {/* Header row */}
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                <ArrowUpRight size={15} strokeWidth={2} />
+                            </div>
+                            <span className="text-sm font-semibold text-white">Total Transactions</span>
                         </div>
-                        <span className="text-sm text-white/70">
-                            {wallet.address
-                                ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
-                                : 'Gx74893k2k3...'}
+
+                        {/* Period filter */}
+                        <div className="relative">
+                            <select
+                                value={txFilter}
+                                onChange={e => setTxFilter(e.target.value)}
+                                className="appearance-none bg-white/15 text-white text-xs font-medium pl-3 pr-7 py-1.5 rounded-md outline-none cursor-pointer border border-white/20 hover:bg-white/25 transition-colors"
+                            >
+                                {FILTERS.map(f => (
+                                    <option key={f.key} value={f.key} className="text-t-primary bg-white">
+                                        {f.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    {/* Amount */}
+                    <div className="flex items-baseline gap-2 mb-1">
+                        <span className="text-[44px] font-bold leading-none tracking-tight">
+                            {formatPrice(filteredTotal, displayCurrency)}
                         </span>
                     </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                        <span className="text-[48px] font-bold leading-none tracking-tight">
-                            {dashboardStats.walletBalance || '0.00'}
-                        </span>
-                        <span className="text-xl text-white/50 font-normal">STRK</span>
-                    </div>
-                    <span className="text-sm text-white/50 mt-auto">Wallet ballance</span>
+                    <span className="text-sm text-white/60 mt-auto">{activeFilterLabel} · {formatPrice(totalAllTime, displayCurrency)} all time</span>
                 </div>
 
                 {/* Total Receivable Card */}
@@ -82,33 +129,30 @@ function Home() {
                     </div>
                     <p className="text-sm text-t-muted mb-5">Total unpaid invoices</p>
 
-                    {/* Progress Bar */}
+                    {/* Progress bar */}
                     <div className="w-full h-2.5 bg-page overflow-hidden mb-5">
                         <div
                             className="h-full bg-brand"
                             style={{
                                 width: (() => {
-                                    const bal = parseFloat(dashboardStats.walletBalance) || 0;
-                                    const rec = parseFloat(String(dashboardStats.receivables).replace(',', '')) || 0;
-                                    const total = bal + rec;
-                                    return total > 0 ? `${(bal / total) * 100}%` : '0%';
+                                    const total = totalAllTime + receivables;
+                                    return total > 0 ? `${(totalAllTime / total) * 100}%` : '0%';
                                 })()
                             }}
-                        ></div>
+                        />
                     </div>
 
-                    {/* Stat Columns */}
                     <div className="flex gap-10 mt-auto">
                         <div className="flex flex-col gap-1">
-                            <span className="text-xs text-t-muted font-medium">Current</span>
+                            <span className="text-xs text-t-muted font-medium">Collected</span>
                             <span className="text-base font-bold text-t-primary">
-                                {dashboardStats.walletBalance || '0'} <span className="text-brand font-semibold">STRK</span>
+                                {formatPrice(totalAllTime, displayCurrency)}
                             </span>
                         </div>
                         <div className="flex flex-col gap-1">
                             <span className="text-xs text-t-muted font-medium">Unpaid</span>
                             <span className="text-base font-bold text-t-primary">
-                                {dashboardStats.receivables || '0'} <span className="text-brand font-semibold">STRK</span>
+                                {formatPrice(receivables, displayCurrency)}
                             </span>
                         </div>
                     </div>
@@ -117,6 +161,7 @@ function Home() {
 
             {/* ── Middle Row: Transactions + Activity ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
                 {/* Transactions Card */}
                 <div className="bg-white border border-border rounded-card overflow-hidden">
                     <div className="flex items-center justify-between px-6 py-4 border-b border-border">
@@ -124,9 +169,6 @@ function Home() {
                             <FileText size={18} strokeWidth={1.8} />
                             <span>Transactions</span>
                         </div>
-                        <button className="flex items-center gap-1 text-xs text-t-muted font-medium px-3 py-1.5 border border-border rounded-md bg-white hover:border-border-medium transition-colors">
-                            Last 6 months <ChevronDown size={14} />
-                        </button>
                     </div>
                     <div>
                         {recentTransactions.length === 0 ? (
@@ -146,10 +188,9 @@ function Home() {
                                         <span className="block text-[11px] text-t-muted mt-0.5">{tx.date}</span>
                                     </div>
                                     <div className="text-right flex-shrink-0">
-                                        <span className="block text-[13px] font-semibold text-t-primary">
-                                            {tx.amount}<span className="text-brand">STRK</span>
+                                        <span className="block text-[13px] font-semibold text-success">
+                                            +{formatPrice(tx.amount, displayCurrency)}
                                         </span>
-                                        <span className="block text-[11px] text-t-muted mt-0.5">14:43:12</span>
                                     </div>
                                 </div>
                             ))
@@ -164,9 +205,6 @@ function Home() {
                             <TrendingUp size={18} strokeWidth={1.8} />
                             <span>Activity</span>
                         </div>
-                        <button className="flex items-center gap-1 text-xs text-t-muted font-medium px-3 py-1.5 border border-border rounded-md bg-white hover:border-border-medium transition-colors">
-                            Last 6 months <ChevronDown size={14} />
-                        </button>
                     </div>
                     <div>
                         {recentTransactions.length === 0 ? (
@@ -182,14 +220,15 @@ function Home() {
                                         <FileText size={16} strokeWidth={1.8} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <span className="block text-[13px] font-medium text-t-primary truncate">You sent an invoice to {tx.customer || 'John Doe'}</span>
+                                        <span className="block text-[13px] font-medium text-t-primary truncate">
+                                            Invoice paid by {tx.customer || 'customer'}
+                                        </span>
                                         <span className="block text-[11px] text-t-muted mt-0.5">{tx.date}</span>
                                     </div>
                                     <div className="text-right flex-shrink-0">
-                                        <span className="block text-[13px] font-semibold text-t-primary">
-                                            {tx.amount}<span className="text-brand">STRK</span>
+                                        <span className="block text-[13px] font-semibold text-success">
+                                            +{formatPrice(tx.amount, displayCurrency)}
                                         </span>
-                                        <span className="block text-[11px] text-t-muted mt-0.5">14:43:12</span>
                                     </div>
                                 </div>
                             ))
@@ -206,10 +245,10 @@ function Home() {
                 </div>
                 <div className="flex justify-center gap-10">
                     {[
-                        { icon: FileText, label: 'Invoice', to: '/invoices/create' },
-                        { icon: Users, label: 'Customer', to: '/customers/add' },
-                        { icon: ShoppingCart, label: 'Checkout', to: '/checkout/create' },
-                        { icon: Package, label: 'Products', to: '/items/add' },
+                        { icon: FileText,     label: 'Invoice',  to: '/invoices/create'  },
+                        { icon: Users,        label: 'Customer', to: '/customers/add'    },
+                        { icon: ShoppingCart, label: 'Checkout', to: '/checkout/create'  },
+                        { icon: Package,      label: 'Products', to: '/items/add'        },
                     ].map((action) => (
                         <Link
                             key={action.label}

@@ -53,6 +53,7 @@ import {
   setWebhookUrl,
   getWebhookUrl,
 } from "../services/webhook";
+import { getCurrencyPreference } from "../utils/currencyPreference";
 import { toUtcMidnightIso } from "../utils/date";
 import { safeAdd, calculateItemsTotal } from "../utils/currency";
 import api from "../services/api";
@@ -162,7 +163,7 @@ export function DataProvider({ children }) {
       description: data.description || '',
       type: data.type || 'service',
       price: data.price,
-      currency: 'STRK',
+      currency: data.currency || 'USD',
       unit: data.unit || 'unit',
     };
     setItems((prev) => {
@@ -211,7 +212,7 @@ export function DataProvider({ children }) {
           customer: customer ? customer.name : 'Unknown',
           customerId: data.customerId,
           amount: total.toLocaleString(),
-          currency: 'STRK',
+          currency: getCurrencyPreference(),
           status: 'pending',
           dueDate: toUtcMidnightIso(data.dueDate),
           createdAt: new Date().toISOString(),
@@ -418,6 +419,46 @@ export function DataProvider({ children }) {
     [checkouts],
   );
 
+  const updateInvoice = useCallback((invoiceId, updates) => {
+    setInvoices((prev) => {
+      const next = prev.map((inv) => inv.id === invoiceId ? { ...inv, ...updates } : inv);
+      save(KEYS.invoices, next);
+      return next;
+    });
+  }, []);
+
+  const deleteInvoice = useCallback((invoiceId) => {
+    setInvoices((prev) => {
+      const next = prev.filter((inv) => inv.id !== invoiceId);
+      save(KEYS.invoices, next);
+      return next;
+    });
+  }, []);
+
+  const updateCustomer = useCallback((customerId, updates) => {
+    setCustomers((prev) => {
+      const next = prev.map((c) => c.id === customerId ? { ...c, ...updates } : c);
+      save(KEYS.customers, next);
+      return next;
+    });
+  }, []);
+
+  const deleteCustomer = useCallback((customerId) => {
+    setCustomers((prev) => {
+      const next = prev.filter((c) => c.id !== customerId);
+      save(KEYS.customers, next);
+      return next;
+    });
+  }, []);
+
+  const updateItem = useCallback((itemId, updates) => {
+    setItems((prev) => {
+      const next = prev.map((i) => i.id === itemId ? { ...i, ...updates } : i);
+      save(KEYS.items, next);
+      return next;
+    });
+  }, []);
+
   const dataContextValue = useMemo(
     () => ({
       customers,
@@ -425,9 +466,14 @@ export function DataProvider({ children }) {
       checkouts,
       items,
       addCustomer,
+      updateCustomer,
+      deleteCustomer,
       addItem,
+      updateItem,
       deleteItems,
       addInvoice,
+      updateInvoice,
+      deleteInvoice,
       sendInvoice,
       markInvoicePaid,
       addCheckout,
@@ -441,9 +487,14 @@ export function DataProvider({ children }) {
       checkouts,
       items,
       addCustomer,
+      updateCustomer,
+      deleteCustomer,
       addItem,
+      updateItem,
       deleteItems,
       addInvoice,
+      updateInvoice,
+      deleteInvoice,
       sendInvoice,
       markInvoicePaid,
       addCheckout,

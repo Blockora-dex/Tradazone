@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Printer } from 'lucide-react';
+import { ArrowLeft, Download, Printer, CreditCard } from 'lucide-react';
 import InvoiceLayout from '../components/InvoiceLayout';
 import { useData } from '../../../context/DataContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -76,10 +76,20 @@ function InvoicePreview() {
                         </button>
                         <button
                             onClick={handleDownload}
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-brand text-white text-sm font-semibold hover:bg-brand-dark active:scale-95 transition-all"
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-white text-t-primary border border-border text-sm font-semibold hover:bg-gray-50 active:scale-95 transition-all"
                         >
                             <Download size={16} /> Download PDF
                         </button>
+                        {invoice.status !== 'paid' && (
+                            <a
+                                href={`${import.meta.env.BASE_URL}pay/invoice/${id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-brand text-white text-sm font-semibold hover:bg-brand/90 active:scale-95 transition-all"
+                            >
+                                <CreditCard size={16} /> Pay here
+                            </a>
+                        )}
                     </div>
                 </div>
             </div>

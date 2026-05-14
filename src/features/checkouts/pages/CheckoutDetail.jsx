@@ -3,11 +3,13 @@ import { ArrowLeft, Copy, Link as LinkIcon, Edit, Trash2, ExternalLink } from 'l
 import Button from '../../../components/forms/Button';
 import StatusBadge from '../../../components/tables/StatusBadge';
 import { useData } from '../../../context/DataContext';
+import { formatPrice, useCurrencyPreference } from '../../../utils/currencyPreference';
 
 function CheckoutDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { checkouts } = useData();
+    const displayCurrency = useCurrencyPreference();
     const checkout = checkouts.find(c => c.id === id);
 
     if (!checkout) return <div className="p-8"><p className="text-t-muted">Checkout not found</p></div>;
@@ -36,7 +38,7 @@ function CheckoutDetail() {
                     <StatusBadge status={checkout.status} />
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-                    <div><span className="block text-xs text-t-muted mb-1">Amount</span><span className="text-sm font-medium">{checkout.amount} {checkout.currency}</span></div>
+                    <div><span className="block text-xs text-t-muted mb-1">Amount</span><span className="text-sm font-medium">{formatPrice(checkout.amount, displayCurrency)}</span></div>
                     <div><span className="block text-xs text-t-muted mb-1">Description</span><span className="text-sm font-medium">{checkout.description}</span></div>
                     <div><span className="block text-xs text-t-muted mb-1">Views</span><span className="text-sm font-medium">{checkout.views}</span></div>
                     <div><span className="block text-xs text-t-muted mb-1">Payments</span><span className="text-sm font-medium">{checkout.payments}</span></div>

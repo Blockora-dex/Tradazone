@@ -3,8 +3,10 @@ import InvoiceHeader from './InvoiceHeader';
 import InvoiceTable from './InvoiceTable';
 import InvoiceSummary from './InvoiceSummary';
 import InvoiceFooter from './InvoiceFooter';
+import { getCurrencyPreference } from '../../utils/currencyPreference';
 
 const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sender }, ref) {
+    const displayCurrency = getCurrencyPreference();
     const subtotal = invoice.items.reduce(
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
         0
@@ -65,14 +67,14 @@ const InvoiceLayout = forwardRef(function InvoiceLayout({ invoice, customer, sen
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
-                currency={invoice.currency}
+                currency={displayCurrency}
             />
 
             {/* Footer */}
             <div className="mt-auto">
                 <InvoiceFooter
                     notes={sender?.name || 'Sender'}
-                    paymentLink={`https://pay.tradazone.com/${invoice.id}`}
+                    paymentLink={`${typeof window !== 'undefined' ? window.location.origin : 'https://tradazone.com'}/pay/invoice/${invoice.id}`}
                 />
             </div>
         </div>

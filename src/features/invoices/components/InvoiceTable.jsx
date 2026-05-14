@@ -1,7 +1,8 @@
-function InvoiceTable({ items = [], currency = 'STRK' }) {
+import { formatPrice } from '../../../utils/currencyPreference';
+
+function InvoiceTable({ items = [], currency = 'USD' }) {
     return (
         <div className="mb-8">
-            {/* Table Header */}
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr] border-t border-gray-200 py-3">
                 <span className="text-sm font-semibold text-t-primary">Item Description</span>
                 <span className="text-sm font-semibold text-brand text-center">Price</span>
@@ -9,7 +10,6 @@ function InvoiceTable({ items = [], currency = 'STRK' }) {
                 <span className="text-sm font-semibold text-brand text-right">Amount</span>
             </div>
 
-            {/* Table Rows */}
             {items.map((item, index) => {
                 const amount = parseFloat(item.price) * item.quantity;
                 return (
@@ -18,14 +18,13 @@ function InvoiceTable({ items = [], currency = 'STRK' }) {
                         className="grid grid-cols-[2fr_1fr_1fr_1fr] border-t border-gray-200 py-4"
                     >
                         <span className="text-sm text-t-primary">{item.name}</span>
-                        <span className="text-sm text-brand text-center">{item.price}</span>
+                        <span className="text-sm text-brand text-center">{formatPrice(item.price, currency)}</span>
                         <span className="text-sm text-brand text-center">{item.quantity}</span>
-                        <span className="text-sm text-brand text-right">{amount}</span>
+                        <span className="text-sm text-brand text-right">{formatPrice(amount, currency)}</span>
                     </div>
                 );
             })}
 
-            {/* Empty rows for visual consistency (like the reference) */}
             {items.length < 4 &&
                 Array.from({ length: 4 - items.length }).map((_, i) => (
                     <div

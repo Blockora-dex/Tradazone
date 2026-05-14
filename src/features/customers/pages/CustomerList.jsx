@@ -3,16 +3,18 @@ import { Plus, Search, Users } from 'lucide-react';
 import DataTable from '../../../components/tables/DataTable';
 import EmptyState from '../../../components/ui/EmptyState';
 import { useData } from '../../../context/DataContext';
+import { formatPrice, useCurrencyPreference } from '../../../utils/currencyPreference';
 
 function CustomerList() {
     const navigate = useNavigate();
     const { customers } = useData();
+    const displayCurrency = useCurrencyPreference();
 
     const columns = [
         { key: 'name', header: 'Name' },
         { key: 'email', header: 'Email' },
         { key: 'phone', header: 'Phone' },
-        { key: 'totalSpent', header: 'Total Spent', render: (value, row) => `${value} ${row.currency}` },
+        { key: 'totalSpent', header: 'Total Spent', render: (value) => formatPrice(value, displayCurrency) },
         { key: 'invoiceCount', header: 'Invoices' },
         { key: 'createdAt', header: 'Created' }
     ];

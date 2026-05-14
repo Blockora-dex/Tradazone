@@ -3,16 +3,18 @@ import { Plus, Search, Package } from 'lucide-react';
 import DataTable from '../../../components/tables/DataTable';
 import EmptyState from '../../../components/ui/EmptyState';
 import { useData } from '../../../context/DataContext';
+import { formatPrice, useCurrencyPreference } from '../../../utils/currencyPreference';
 
 function ItemsList() {
     const navigate = useNavigate();
     const { items } = useData();
+    const displayCurrency = useCurrencyPreference();
 
     const columns = [
         { key: 'name', header: 'Name' },
         { key: 'description', header: 'Description' },
         { key: 'type', header: 'Type', render: (value) => <span className="capitalize">{value}</span> },
-        { key: 'price', header: 'Price', render: (value, row) => `${value} ${row.currency}` },
+        { key: 'price', header: 'Price', render: (value) => formatPrice(value, displayCurrency) },
         { key: 'unit', header: 'Unit' }
     ];
 

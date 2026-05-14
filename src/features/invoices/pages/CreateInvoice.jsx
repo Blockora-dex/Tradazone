@@ -5,17 +5,23 @@ import Input from '../../../components/forms/Input';
 import Select from '../../../components/forms/Select';
 import Button from '../../../components/forms/Button';
 import { useData } from '../../../context/DataContext';
+import { formatPrice, useCurrencyPreference } from '../../../utils/currencyPreference';
 
 function CreateInvoice() {
     const navigate = useNavigate();
     const { customers, items, addInvoice } = useData();
+    const displayCurrency = useCurrencyPreference();
+
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         customerId: '', dueDate: '', items: [{ itemId: '', quantity: 1, price: '' }]
     });
 
     const customerOptions = customers.map(c => ({ value: c.id, label: c.name }));
-    const itemOptions = items.map(i => ({ value: i.id, label: `${i.name} - ${i.price} ${i.currency}` }));
+    const itemOptions = items.map(i => ({
+        value: i.id,
+        label: `${i.name} — ${formatPrice(i.price, displayCurrency)}`
+    }));
 
     const handleAddItem = () => {
         setFormData({ ...formData, items: [...formData.items, { itemId: '', quantity: 1, price: '' }] });
@@ -35,11 +41,9 @@ function CreateInvoice() {
         setFormData({ ...formData, items: newItems });
     };
 
-    const calculateTotal = () => {
-        return formData.items.reduce((total, item) => {
-            return total + ((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0));
-        }, 0);
-    };
+    const calculateTotal = () =>
+        formData.items.reduce((total, item) =>
+            total + ((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)), 0);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -60,7 +64,7 @@ function CreateInvoice() {
                 <h1 className="text-xl font-semibold text-t-primary">Create Invoice</h1>
             </div>
 
-            {/* Step Indicators */}
+            {/* Step indicators */}
             <div className="flex items-center gap-4 mb-8">
                 <div className={`flex items-center gap-2 ${step >= 1 ? 'text-brand' : 'text-t-muted'}`}>
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${step >= 1 ? 'bg-brand text-white' : 'bg-border text-t-muted'}`}>1</span>
@@ -78,8 +82,21 @@ function CreateInvoice() {
                     <>
                         <h2 className="text-base font-semibold mb-5">Customer Information</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <Select label="Select Customer" options={customerOptions} value={formData.customerId} onChange={(e) => setFormData({ ...formData, customerId: e.target.value })} placeholder="Choose a customer" required />
-                            <Input label="Due Date" type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} required />
+                            <Select
+                                label="Select Customer"
+                                options={customerOptions}
+                                value={formData.customerId}
+                                onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                                placeholder="Choose a customer"
+                                required
+                            />
+                            <Input
+                                label="Due Date"
+                                type="date"
+                                value={formData.dueDate}
+                                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                                required
+                            />
                         </div>
                     </>
                 ) : (
@@ -88,11 +105,32 @@ function CreateInvoice() {
                         <div className="flex flex-col gap-4 mb-5">
                             {formData.items.map((item, index) => (
                                 <div key={index} className="grid grid-cols-[2fr_1fr_1fr_auto] gap-3 items-end">
-                                    <Select label="Item/Service" options={itemOptions} value={item.itemId} onChange={(e) => handleItemChange(index, 'itemId', e.target.value)} placeholder="Select item" />
-                                    <Input label="Quantity" type="number" min="1" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} />
-                                    <Input label="Price (STRK)" type="number" value={item.price} onChange={(e) => handleItemChange(index, 'price', e.target.value)} />
+                                    <Select
+                                        label="Item / Service"
+                                        options={itemOptions}
+                                        value={item.itemId}
+                                        onChange={(e) => handleItemChange(index, 'itemId', e.target.value)}
+                                        placeholder="Select item"
+                                    />
+                                    <Input
+                                        label="Quantity"
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity}
+                                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                                    />
+                                    <Input
+                                        label={`Price (${displayCurrency})`}
+                                        type="number"
+                                        value={item.price}
+                                        onChange={(e) => handleItemChange(index, 'price', e.target.value)}
+                                    />
                                     {formData.items.length > 1 && (
-                                        <button type="button" className="p-2 text-error hover:bg-error-bg rounded-lg transition-colors mb-1" onClick={() => handleRemoveItem(index)}>
+                                        <button
+                                            type="button"
+                                            className="p-2 text-error hover:bg-error-bg rounded-lg transition-colors mb-1"
+                                            onClick={() => handleRemoveItem(index)}
+                                        >
                                             <Trash2 size={18} />
                                         </button>
                                     )}
@@ -100,11 +138,15 @@ function CreateInvoice() {
                             ))}
                         </div>
 
-                        <Button type="button" variant="secondary" icon={Plus} onClick={handleAddItem}>Add Item</Button>
+                        <Button type="button" variant="secondary" icon={Plus} onClick={handleAddItem}>
+                            Add Item
+                        </Button>
 
                         <div className="flex items-center justify-between mt-6 pt-5 border-t border-border">
                             <span className="text-sm font-medium">Total:</span>
-                            <span className="text-xl font-bold text-brand">{calculateTotal()} STRK</span>
+                            <span className="text-xl font-bold text-brand">
+                                {formatPrice(calculateTotal(), displayCurrency)}
+                            </span>
                         </div>
                     </>
                 )}

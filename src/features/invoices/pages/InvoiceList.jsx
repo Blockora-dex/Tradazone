@@ -4,15 +4,17 @@ import DataTable from '../../../components/tables/DataTable';
 import StatusBadge from '../../../components/tables/StatusBadge';
 import EmptyState from '../../../components/ui/EmptyState';
 import { useData } from '../../../context/DataContext';
+import { formatPrice, useCurrencyPreference } from '../../../utils/currencyPreference';
 
 function InvoiceList() {
     const navigate = useNavigate();
     const { invoices } = useData();
+    const displayCurrency = useCurrencyPreference();
 
     const columns = [
         { key: 'id', header: 'Invoice ID' },
         { key: 'customer', header: 'Customer' },
-        { key: 'amount', header: 'Amount', render: (value, row) => `${value} ${row.currency}` },
+        { key: 'amount', header: 'Amount', render: (value) => formatPrice(value, displayCurrency) },
         { key: 'status', header: 'Status', render: (value) => <StatusBadge status={value} /> },
         { key: 'dueDate', header: 'Due Date' },
         {
@@ -45,7 +47,7 @@ function InvoiceList() {
                 <EmptyState
                     icon={FileText}
                     title="No invoices yet"
-                    description="Create your first invoice and send it to a customer to get paid in STRK."
+                    description="Create your first invoice and send it to a customer to get paid."
                     actionLabel="Create your first invoice"
                     actionPath="/invoices/create"
                 />

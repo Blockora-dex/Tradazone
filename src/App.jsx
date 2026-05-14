@@ -57,7 +57,8 @@ const InvoiceList = lazy(() => import('./features/invoices/pages/InvoiceList'));
 const CreateInvoice = lazy(() => import('./features/invoices/pages/CreateInvoice'));
 const InvoiceDetail = lazy(() => import('./features/invoices/pages/InvoiceDetail'));
 const InvoicePreview = lazy(() => import('./features/invoices/pages/InvoicePreview'));
-const InvoicePayment = lazy(() => import('./features/invoices/pages/InvoicePayment'));
+const InvoicePayment  = lazy(() => import('./features/invoices/pages/InvoicePayment'));
+const InvoiceCheckout = lazy(() => import('./features/invoices/pages/InvoiceCheckout'));
 const ItemsList = lazy(() => import('./features/items/pages/ItemsList'));
 const AddItem = lazy(() => import('./features/items/pages/AddItem'));
 const ItemDetail = lazy(() => import('./features/items/pages/ItemDetail'));
@@ -131,7 +132,7 @@ function App() {
                     />
                   }
                 >
-                  <InvoicePayment />
+                  <InvoiceCheckout />
                 </Suspense>
               }
             />
