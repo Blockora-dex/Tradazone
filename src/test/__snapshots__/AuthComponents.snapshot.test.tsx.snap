@@ -1,0 +1,275 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Auth module snapshots - SignIn > matches snapshot for unauthenticated state with no recent wallet 1`] = `
+<div
+  class="min-h-screen flex"
+>
+  <div
+    class="w-full lg:w-[40%] flex flex-col justify-start px-6 py-8 lg:px-10 lg:py-10 bg-white overflow-y-auto"
+  >
+    <div
+      class="mb-8 lg:mb-12"
+    >
+      <img
+        alt="Tradazone"
+        class="object-contain h-7 lg:h-9"
+        src="logo-blue.png"
+      />
+    </div>
+    <h1
+      class="text-xl lg:text-3xl font-bold text-t-primary mb-3 leading-snug"
+    >
+      Manage clients, send invoices, and accept payments directly into your preferred wallet
+    </h1>
+    <p
+      class="text-sm text-t-muted mb-8 lg:mb-10"
+    >
+      Connect your wallet to get started
+    </p>
+    <button
+      class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-brand text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all mb-6 rounded-lg"
+    >
+      Connect Wallet
+    </button>
+  </div>
+  <div
+    class="hidden lg:block lg:w-[60%] bg-gray-50 relative overflow-hidden"
+  >
+    <img
+      alt="Tradazone — invoices, payments, crypto"
+      class="absolute inset-0 w-full h-full object-cover"
+      src="auth-splash.svg"
+    />
+  </div>
+</div>
+`;
+
+exports[`Auth module snapshots - SignIn > matches snapshot when a returning wallet hint is available 1`] = `
+<div
+  class="min-h-screen flex"
+>
+  <div
+    class="w-full lg:w-[40%] flex flex-col justify-start px-6 py-8 lg:px-10 lg:py-10 bg-white overflow-y-auto"
+  >
+    <div
+      class="mb-8 lg:mb-12"
+    >
+      <img
+        alt="Tradazone"
+        class="object-contain h-7 lg:h-9"
+        src="logo-blue.png"
+      />
+    </div>
+    <h1
+      class="text-xl lg:text-3xl font-bold text-t-primary mb-3 leading-snug"
+    >
+      Manage clients, send invoices, and accept payments directly into your preferred wallet
+    </h1>
+    <p
+      class="text-sm text-t-muted mb-8 lg:mb-10"
+    >
+      Connect your wallet to get started
+    </p>
+    <div
+      class="flex items-center gap-2 px-4 py-3 mb-5 bg-brand/5 border border-brand/20 rounded-lg text-sm text-brand"
+    >
+      <span
+        class="w-2 h-2 rounded-full bg-brand flex-shrink-0"
+      />
+      <span>
+        Welcome back — reconnect 
+        <span
+          class="font-mono font-medium"
+        >
+          0x1234...5678
+        </span>
+         to continue
+      </span>
+    </div>
+    <button
+      class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-brand text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all mb-6 rounded-lg"
+    >
+      Connect Wallet
+    </button>
+  </div>
+  <div
+    class="hidden lg:block lg:w-[60%] bg-gray-50 relative overflow-hidden"
+  >
+    <img
+      alt="Tradazone — invoices, payments, crypto"
+      class="absolute inset-0 w-full h-full object-cover"
+      src="auth-splash.svg"
+    />
+  </div>
+</div>
+`;
+
+exports[`Auth module snapshots - SignIn > matches snapshot when the session-expired banner is shown 1`] = `
+<div
+  class="min-h-screen flex"
+>
+  <div
+    class="w-full lg:w-[40%] flex flex-col justify-start px-6 py-8 lg:px-10 lg:py-10 bg-white overflow-y-auto"
+  >
+    <div
+      class="mb-8 lg:mb-12"
+    >
+      <img
+        alt="Tradazone"
+        class="object-contain h-7 lg:h-9"
+        src="logo-blue.png"
+      />
+    </div>
+    <div
+      class="flex items-center gap-2 px-4 py-3 mb-6 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-circle-alert flex-shrink-0"
+        fill="none"
+        height="16"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="16"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle
+          cx="12"
+          cy="12"
+          r="10"
+        />
+        <line
+          x1="12"
+          x2="12"
+          y1="8"
+          y2="12"
+        />
+        <line
+          x1="12"
+          x2="12.01"
+          y1="16"
+          y2="16"
+        />
+      </svg>
+      <span>
+        Your session expired — reconnect to continue.
+      </span>
+    </div>
+    <h1
+      class="text-xl lg:text-3xl font-bold text-t-primary mb-3 leading-snug"
+    >
+      Manage clients, send invoices, and accept payments directly into your preferred wallet
+    </h1>
+    <p
+      class="text-sm text-t-muted mb-8 lg:mb-10"
+    >
+      Connect your wallet to get started
+    </p>
+    <button
+      class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-brand text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all mb-6 rounded-lg"
+    >
+      Connect Wallet
+    </button>
+  </div>
+  <div
+    class="hidden lg:block lg:w-[60%] bg-gray-50 relative overflow-hidden"
+  >
+    <img
+      alt="Tradazone — invoices, payments, crypto"
+      class="absolute inset-0 w-full h-full object-cover"
+      src="auth-splash.svg"
+    />
+  </div>
+</div>
+`;
+
+exports[`Auth module snapshots - SignUp > matches snapshot for unauthenticated state 1`] = `
+<div
+  class="min-h-screen flex"
+>
+  <div
+    class="w-full lg:w-[40%] flex flex-col justify-start px-6 py-8 lg:px-10 lg:py-10 bg-white overflow-y-auto"
+  >
+    <div
+      class="mb-8 lg:mb-12"
+    >
+      <img
+        alt="Tradazone"
+        class="object-contain h-7 lg:h-9"
+        src="logo-blue.png"
+      />
+    </div>
+    <h1
+      class="text-xl lg:text-3xl font-bold text-t-primary mb-3 leading-snug"
+    >
+      Manage clients, send invoices, and accept payments directly into your preferred wallet
+    </h1>
+    <p
+      class="text-sm text-t-muted mb-8 lg:mb-10"
+    >
+      Connect your wallet to get started
+    </p>
+    <button
+      class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-brand text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all mb-6 rounded-lg"
+    >
+      Connect Wallet
+    </button>
+  </div>
+  <div
+    class="hidden lg:block lg:w-[60%] bg-gray-50 relative overflow-hidden"
+  >
+    <img
+      alt="Tradazone — invoices, payments, crypto"
+      class="absolute inset-0 w-full h-full object-cover"
+      src="auth-splash.svg"
+    />
+  </div>
+</div>
+`;
+
+exports[`Auth module snapshots - SignUp > matches snapshot when a profile description draft is already present 1`] = `
+<div
+  class="min-h-screen flex"
+>
+  <div
+    class="w-full lg:w-[40%] flex flex-col justify-start px-6 py-8 lg:px-10 lg:py-10 bg-white overflow-y-auto"
+  >
+    <div
+      class="mb-8 lg:mb-12"
+    >
+      <img
+        alt="Tradazone"
+        class="object-contain h-7 lg:h-9"
+        src="logo-blue.png"
+      />
+    </div>
+    <h1
+      class="text-xl lg:text-3xl font-bold text-t-primary mb-3 leading-snug"
+    >
+      Manage clients, send invoices, and accept payments directly into your preferred wallet
+    </h1>
+    <p
+      class="text-sm text-t-muted mb-8 lg:mb-10"
+    >
+      Connect your wallet to get started
+    </p>
+    <button
+      class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 h-10 bg-brand text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all mb-6 rounded-lg"
+    >
+      Connect Wallet
+    </button>
+  </div>
+  <div
+    class="hidden lg:block lg:w-[60%] bg-gray-50 relative overflow-hidden"
+  >
+    <img
+      alt="Tradazone — invoices, payments, crypto"
+      class="absolute inset-0 w-full h-full object-cover"
+      src="auth-splash.svg"
+    />
+  </div>
+</div>
+`;
