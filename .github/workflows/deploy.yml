@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npm run lint
       - run: npm run typecheck
 
@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npm test
 
   # ── Build ──────────────────────────────────────────────────────────────────
@@ -47,15 +47,13 @@ jobs:
     name: Build
     needs: [lint, test]
     runs-on: ubuntu-latest
-    environment:
-      name: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
 
       - name: Build
         run: npm run build
