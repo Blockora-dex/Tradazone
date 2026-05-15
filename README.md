@@ -3,6 +3,7 @@
 **Tradazone is a crypto-native invoicing and payment platform built for modern merchants.** It lets you send invoices, create instant payment links, and accept cryptocurrency payments — all without a bank account, payment processor, or intermediary.
 
 > **Live app:** [tradazone.github.io/Tradazone](https://tradazone.github.io/Tradazone/)
+> **Live website:** [tradazone.github.io/Tradazone](https://tradazone.github.io/tradazone-site/)
 
 ---
 
