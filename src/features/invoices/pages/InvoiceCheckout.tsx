@@ -111,7 +111,7 @@ function SuccessScreen({ invoice, customer, cryptoAmount, selectedCrypto, txHash
 
 // ─── Not-found screen ─────────────────────────────────────────────────────────
 
-function NotFoundScreen() {
+function NotFoundScreen({ invoiceId = '', debugError = '' }) {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             <header className="bg-brand py-4 flex items-center justify-center">
@@ -123,6 +123,20 @@ function NotFoundScreen() {
                     <p className="text-t-muted text-sm">
                         This payment link is invalid or the invoice has been removed.
                     </p>
+                    {(invoiceId || debugError) && (
+                        <div className="mt-6 text-left bg-gray-50 border border-border rounded p-3 space-y-1">
+                            {invoiceId && (
+                                <p className="text-xs font-mono text-t-muted">
+                                    <span className="font-semibold">Looking up:</span> {invoiceId}
+                                </p>
+                            )}
+                            {debugError && (
+                                <p className="text-xs font-mono text-red-500 break-all">
+                                    <span className="font-semibold">Error:</span> {debugError}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -153,12 +167,13 @@ function InvoiceCheckout() {
     // ── Invoice fetch (public — no auth required)
     const [invoice,         setInvoice]         = useState(null);
     const [invoiceFetching, setInvoiceFetching] = useState(true);
+    const [fetchError,      setFetchError]      = useState('');
 
     useEffect(() => {
         if (!invoiceId) { setInvoiceFetching(false); return; }
         api.invoices.getPublic(invoiceId)
-            .then(data  => setInvoice(data))
-            .catch(()   => setInvoice(null))
+            .then(data => { setInvoice(data); if (!data) setFetchError('Invoice not found in database'); })
+            .catch(err => { setInvoice(null); setFetchError(err?.message ?? String(err)); })
             .finally(() => setInvoiceFetching(false));
     }, [invoiceId]);
 
@@ -299,7 +314,7 @@ function InvoiceCheckout() {
 
     // ── Early returns ─────────────────────────────────────────────────────────
     if (invoiceFetching) return <LoadingScreen />;
-    if (!invoice) return <NotFoundScreen />;
+    if (!invoice) return <NotFoundScreen invoiceId={invoiceId} debugError={fetchError} />;
 
     if (paymentStatus === 'success' || invoice.status === 'paid') {
         return (

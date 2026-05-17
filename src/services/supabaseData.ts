@@ -196,9 +196,11 @@ export const invoicesService = {
   },
   async getPublic(id: string): Promise<Invoice | null> {
     const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single();
-    // PGRST116 = no rows returned by .single() — treat as not found, not an error
-    if (error && (error as { code?: string }).code !== 'PGRST116') {
-      handleError('invoices.getPublic', error);
+    if (error) {
+      const code = (error as { code?: string }).code;
+      console.error('[getPublic] Supabase error:', code, (error as Error).message);
+      // PGRST116 = no rows returned — not found, not an error worth throwing
+      if (code !== 'PGRST116') handleError('invoices.getPublic', error);
     }
     return data ? invoiceFromDb(data as DbRow) : null;
   },
