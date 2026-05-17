@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle, ChevronDown, AlertCircle, Download } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
+import { useData } from '../../../context/DataContext';
 import { priceService } from '../../../services/priceService';
 import { generateReceipt } from '../../../utils/generateReceipt';
 import api from '../../../services/api';
@@ -163,18 +164,30 @@ function InvoiceCheckout() {
     const { invoiceId } = useParams();
     const { connectWallet, wallet } = useAuth();
 
-    // ── Invoice fetch (public — no auth required)
+    // ── Invoice fetch — DataContext first, Supabase fallback ─────────────────
+    const { invoices } = useData();
     const [invoice,         setInvoice]         = useState(null);
     const [invoiceFetching, setInvoiceFetching] = useState(true);
     const [fetchError,      setFetchError]      = useState('');
 
     useEffect(() => {
         if (!invoiceId) { setInvoiceFetching(false); return; }
+
+        // If the merchant is logged in on this device, the invoice is already
+        // in DataContext — use it directly without a Supabase round-trip.
+        const local = invoices.find(inv => inv.id === invoiceId);
+        if (local) {
+            setInvoice(local);
+            setInvoiceFetching(false);
+            return;
+        }
+
+        // Fall back to Supabase for customers on a different device (email links).
         api.invoices.getPublic(invoiceId)
             .then(data => { setInvoice(data); if (!data) setFetchError('Invoice not found in database'); })
             .catch(err => { setInvoice(null); setFetchError(err?.message ?? String(err)); })
             .finally(() => setInvoiceFetching(false));
-    }, [invoiceId]);
+    }, [invoiceId, invoices]);
 
     // ── Form state
     const [email,   setEmail]   = useState('');
