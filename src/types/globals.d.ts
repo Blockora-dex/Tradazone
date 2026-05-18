@@ -4,7 +4,7 @@ interface Window {
   ethereum?:         unknown;
   starknet?:         unknown;
   starknet_argentX?: unknown;
-  lobstr?:           unknown;
+  lobstrSignerExtension?: unknown;
   coinbaseWalletExtension?: unknown;
   phantom?:          { ethereum?: unknown };
 }

@@ -582,7 +582,7 @@ export function AuthProvider({ children }) {
         const checkInstallations = () => {
             const eth = window.ethereum;
 
-            const hasLobstr = typeof window !== 'undefined' && !!window.lobstr;
+            const hasLobstr = typeof window !== 'undefined' && !!window.lobstrSignerExtension;
             const hasArgent = typeof window !== 'undefined' && !!(window.starknet_argentX || window.starknet?.argentX);
 
             const hasMetaMask = discoveredProviders.some(p => p.info.rdns === 'io.metamask') || !!(eth && eth.isMetaMask);

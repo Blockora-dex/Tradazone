@@ -62,13 +62,13 @@
 export function waitForLobstr(timeout = 3000) {
   return new Promise((resolve) => {
     // Fast path: already present
-    if (window.lobstr) {
+    if (window.lobstrSignerExtension) {
       return resolve(true);
     }
 
     // Poll every 100 ms
     const interval = setInterval(() => {
-      if (window.lobstr) {
+      if (window.lobstrSignerExtension) {
         clearInterval(interval);
         clearTimeout(timer);
         resolve(true);
